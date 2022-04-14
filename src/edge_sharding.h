@@ -4,6 +4,8 @@
 
 extern vid_t RANGE_COUNT;
 extern vid_t RANGE_2DSHIFT;
+extern uint64_t global_range_size;
+
 /*
 template <class T>
 void pgraph_t<T>::alloc_edge_buf(index_t total) 
@@ -143,6 +145,7 @@ void edge_shard_t<T>::cleanup()
     #pragma omp for schedule (static)
     for (vid_t i = 0; i < RANGE_COUNT; ++i) {
         if (global_range[i].edges) {
+            __sync_fetch_and_add(&global_range_size, -sizeof(edgeT_t<T>)*global_range[i].count);
             free(global_range[i].edges);
             global_range[i].edges = 0;
             global_range[i].count = 0;
@@ -614,6 +617,8 @@ void edge_shard_t<T>::prefix_sum(global_range_t<T>* global_range, thd_local_t* t
                 cout << total << " bytes of allocation failed" << endl;
                 assert(0);
             }
+            __sync_fetch_and_add(&global_range_size, sizeof(edgeT_t<T>)*total);
+            // std::cout << "Create New global_range, total size = " << global_range_size << " Bytes." << std::endl;
         }
     }
 }

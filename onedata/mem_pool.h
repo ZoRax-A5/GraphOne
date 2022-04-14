@@ -6,6 +6,10 @@ using std::cout;
 using std::endl;
 using std::max;
 
+extern uint64_t vunit_size;
+extern uint64_t snap_size;
+extern uint64_t adjlist_size;
+
 /*
 template <class T>
 index_t TO_CACHELINE<T>(index_t count, index_t meta_size)
@@ -66,6 +70,8 @@ class thd_mem_t {
             mem1->vunit_beg = (vunit_t<T>*)calloc(sizeof(vunit_t<T>), count);
             assert(mem1->vunit_beg);
         }
+        // check count
+        __sync_fetch_and_add(&vunit_size, sizeof(vunit_t<T>)*count);
         return eOK;
 	}	
 
@@ -85,6 +91,7 @@ class thd_mem_t {
         if (MAP_FAILED == mem1->dlog_beg) {
             mem1->dlog_beg = (snapT_t<T>*)calloc(sizeof(snapT_t<T>), count);
         }
+        __sync_fetch_and_add(&snap_size, sizeof(snapT_t<T>)*count);
         return eOK;
 	}
     
@@ -145,6 +152,7 @@ class thd_mem_t {
             mem1->adjlog_beg = (char*)malloc(size);
             assert(mem1->adjlog_beg);
         }
+        __sync_fetch_and_add(&adjlist_size, size);
         //cout << "alloc adj " << delta_size << endl; 
         return eOK;
     }

@@ -11,6 +11,15 @@
 #include "sgraph.h"
 #include "util.h"
 
+#include "mem/getmem.h"
+
+extern uint64_t vunit_size;
+extern uint64_t snap_size;
+extern uint64_t global_range_size;
+extern uint64_t local_buf_size;
+extern uint64_t elog_size;
+extern uint64_t adjlist_size;
+
 using namespace std;
 
 template <class T>
@@ -341,7 +350,28 @@ void plaingraph_manager_t<T>::prep_graph_adj(const string& idirname, const strin
         ugraph->create_snapshot();
     }
     double end = mywtime ();
+
+    
+    double vm, rss;
+    pid_t proc_id = getpid();
+    process_mem_usage(proc_id, vm, rss);
+
+    cout << "VIRT: " << vm << " MB; RES: " << rss << " MB." << endl;
+    std::cout << "Vunit bulk total size   = " << vunit_size / 1024.0 / 1024.0 / 1024.0 << " MB." << std::endl;
+    std::cout << "Snap bulk total size    = " << snap_size / 1024.0 / 1024.0 / 1024.0 << " MB." << std::endl;
+    std::cout << "Global range total size = " << global_range_size / 1024.0 / 1024.0 / 1024.0 << " MB." << std::endl;
+    std::cout << "Elog total size         = " << elog_size / 1024.0 / 1024.0 / 1024.0 << " MB." << std::endl;
+    std::cout << "adjlist total size      = " << adjlist_size / 1024.0 / 1024.0 / 1024.0 << " MB." << std::endl;
+
     cout << "Make graph time = " << end - start << endl;
+
+    std::string statistic_filename = "result_go.csv";
+    std::ofstream ofs;
+    ofs.open(statistic_filename.c_str(), std::ofstream::out | std::ofstream::app );
+    ofs << end - start << "," << vm << "," << rss << "," 
+        << vunit_size / 1024.0 / 1024.0 / 1024.0 << "," << snap_size / 1024.0 / 1024.0 / 1024.0 << "," << global_range_size / 1024.0 / 1024.0 / 1024.0 << ","
+        << elog_size / 1024.0 / 1024.0 / 1024.0 << "," << adjlist_size / 1024.0 / 1024.0 / 1024.0 << std::endl;
+    ofs.close();
 }
 
 template <class T>
@@ -478,6 +508,10 @@ void plaingraph_manager_t<T>::prep_graph2(const string& idirname, const string& 
         g->create_threads(true, false);
     }
     
+    double vm1, rss1;
+    pid_t proc_id = getpid();
+    process_mem_usage(proc_id, vm1, rss1);
+
     //Batch and Make Graph
     double start = mywtime();
     if (0 == _source) {//text
@@ -487,7 +521,10 @@ void plaingraph_manager_t<T>::prep_graph2(const string& idirname, const string& 
     }
     double end = mywtime();
     cout << "Batch Update Time = " << end - start << endl;
-    
+
+    double vm2, rss2;
+    process_mem_usage(proc_id, vm2, rss2);
+
     if (_persist) {
         //Wait for make and durable graph
         waitfor_archive_durable(start);
@@ -498,6 +535,28 @@ void plaingraph_manager_t<T>::prep_graph2(const string& idirname, const string& 
     }
     
     if (_persist) g->type_store(odirname);
+
+    double vm3, rss3;
+    process_mem_usage(proc_id, vm3, rss3);
+    
+    double vm = vm2 > vm3 ? vm2 : vm3;
+    double rss = rss2 > rss3 ? rss2 : rss3;
+
+    cout << "VIRT: " << vm / 1024.0 << " MB; RES: " << rss / 1024.0 << " MB." << endl;
+    std::cout << "Vunit bulk total size   = " << vunit_size / 1024.0 / 1024.0 / 1024.0 << " MB." << std::endl;
+    std::cout << "Snap bulk total size    = " << snap_size / 1024.0 / 1024.0 / 1024.0 << " MB." << std::endl;
+    std::cout << "Global range total size = " << global_range_size / 1024.0 / 1024.0 / 1024.0 << " MB." << std::endl;
+    std::cout << "Elog total size         = " << elog_size / 1024.0 / 1024.0 / 1024.0 << " MB." << std::endl;
+    std::cout << "adjlist total size      = " << adjlist_size / 1024.0 / 1024.0 / 1024.0 << " MB." << std::endl;
+    std::cout << "Local buf total size    = " << local_buf_size / 1024.0 / 1024.0 / 1024.0 << " MB." << std::endl;
+
+    std::string statistic_filename = "result_go.csv";
+    std::ofstream ofs;
+    ofs.open(statistic_filename.c_str(), std::ofstream::out | std::ofstream::app );
+    ofs << end - start << "," << vm / 1024.0 << "," << rss / 1024.0 << "," 
+        << vunit_size / 1024.0 / 1024.0 / 1024.0 << "," << snap_size / 1024.0 / 1024.0 / 1024.0 << "," << global_range_size / 1024.0 / 1024.0 / 1024.0 << ","
+        << elog_size / 1024.0 / 1024.0 / 1024.0 << "," << adjlist_size / 1024.0 / 1024.0 / 1024.0 << "," << local_buf_size / 1024.0 / 1024.0 / 1024.0 << std::endl;
+    ofs.close();
 }
 
 template <class T>

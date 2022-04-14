@@ -2,6 +2,8 @@
 
 #include <atomic>
 
+extern uint64_t elog_size;
+
 template <class T>
 class tmp_blog_t {
  public:
@@ -86,5 +88,6 @@ void blog_t<T>::alloc_edgelog(index_t count) {
     }*/
     blog_beg = (edgeT_t<T>*)calloc(blog_count, sizeof(edgeT_t<T>));
     assert(blog_beg);
+    __sync_fetch_and_add(&elog_size, sizeof(edgeT_t<T>)*blog_count);
 }
 

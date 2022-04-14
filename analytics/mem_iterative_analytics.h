@@ -16,8 +16,8 @@ void
 mem_hop1(gview_t<T>* snaph)
 {
     srand(0);
-    int query_count = 2048;
     vid_t  v_count  = snaph->get_vcount();
+    int query_count = v_count / 10;
     vid_t* query = (vid_t*)calloc(sizeof(vid_t), query_count);
     int i1 = 0;
     while (i1 < query_count) {
@@ -383,7 +383,7 @@ template<class T>
 void mem_hop2(gview_t<T>* snaph) 
 {
     srand(0);
-    int query_count = 512;
+    int query_count = 4096;
     vid_t v_count = snaph->get_vcount();
     hop2_t* query = (hop2_t*)calloc(sizeof(hop2_t), query_count); 
     int i1 = 0;
@@ -482,6 +482,7 @@ void mem_hop2(gview_t<T>* snaph)
 
         #pragma omp for schedule (static) reduction(+:sum) nowait
         for (degree_t j = 0; j < d; ++j) {
+            v = vlist[j];
             delta_adjlist = snaph->get_nebrs_archived_out(v); 
             if (0 == delta_adjlist) continue;
 
@@ -532,7 +533,7 @@ void mem_hop2(gview_t<T>* snaph)
 
     double end = mywtime();
     free(query);
-    cout << "Sum = " << sum2 << " 2 Hop Time = " << end - start << endl;
+    cout << "Sum2 = " << sum2 << " 2 Hop Time = " << end - start << endl;
 }
 
 template<class T>

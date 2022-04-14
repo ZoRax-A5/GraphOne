@@ -7,6 +7,8 @@
 #define MAP_HUGE_2MB (21 << MAP_HUGE_SHIFT)
 #endif
 
+extern uint64_t local_buf_size;
+
 short CorePin(int coreID);
 
 inline index_t upper_power_of_two(index_t v)
@@ -51,6 +53,9 @@ index_t alloc_mem_dir(const string& idirname, char** buf, bool alloc)
         cout << "huge page alloc failed while reading input dir" << endl;
         local_buf =  malloc(total_size);
     }
+
+    __sync_fetch_and_add(&local_buf_size, total_size);
+
     *buf = (char*)local_buf;
     return total_size;
 }
