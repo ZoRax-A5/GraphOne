@@ -44,6 +44,7 @@ index_t alloc_mem_dir(const string& idirname, char** buf, bool alloc)
     }
     closedir(dir);
 
+    // local_buf 放在 DRAM 上
     void* local_buf = mmap(0, total_size, PROT_READ|PROT_WRITE,
                 MAP_PRIVATE|MAP_ANONYMOUS|MAP_HUGETLB|MAP_HUGE_2MB, 0, 0);
 
@@ -51,6 +52,36 @@ index_t alloc_mem_dir(const string& idirname, char** buf, bool alloc)
         cout << "huge page alloc failed while reading input dir" << endl;
         local_buf =  malloc(total_size);
     }
+
+    // // local_buf 放在 PMEM 上
+    // void* local_buf = 0;
+    // char filePath[] = "/pmem/zorax/testGraphOne/local_buf.txt";
+    // size_t mapped_len;
+    // int is_pmem;
+    // /* create a 4k pmem file and memory map it */
+    // if ((local_buf = pmem_map_file(filePath, total_size, PMEM_FILE_CREATE, 0666, &mapped_len, &is_pmem)) == NULL)  {
+    //     std::cout << "Could not map pmem file :" << filePath << " error: " << strerror(errno) << std::endl;
+    // }
+    // if (!is_pmem){
+    //     std::cout << "not pmem!" << std::endl;
+    // }
+    // // memset(local_buf, 0, total_size);  //pre touch, 消除page fault影响
+    // assert(local_buf);
+    
+    // // local_buf 放在 SSD 上
+    // void* local_buf = 0;
+    // int fd = 0;
+    // char filePath[] = "/mnt/nvme1/zorax/testGraphOne/local_buf.txt";
+    // if ( (fd = open(filePath, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR)) < 0) {
+    //     std::cout << "Could not open file: " << filePath << "error: " << strerror(errno) << std::endl;
+    // }
+    // if (ftruncate(fd, total_size) < 0) {
+    //     std::cout << "Could not ftruncate file: " << filePath << "error: " << strerror(errno) << std::endl;
+    // }
+    // if ((local_buf = mmap(0, total_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)) == NULL) {
+    //     std::cout << "Could not map ssd file: " << filePath << "error: " << strerror(errno) << std::endl;
+    // }
+    
     *buf = (char*)local_buf;
     return total_size;
 }
