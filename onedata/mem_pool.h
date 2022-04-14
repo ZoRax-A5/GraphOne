@@ -9,6 +9,8 @@ using std::max;
 #include <libpmem.h>
 
 static uint32_t adjfilecount = 0; //Rui
+extern uint64_t vunit_size;
+extern uint64_t snap_size;
 
 /*
 template <class T>
@@ -70,6 +72,7 @@ class thd_mem_t {
             mem1->vunit_beg = (vunit_t<T>*)calloc(sizeof(vunit_t<T>), count);
             assert(mem1->vunit_beg);
         }
+        __sync_fetch_and_add(&vunit_size, sizeof(vunit_t<T>)*count);
         return eOK;
 	}	
 
@@ -89,6 +92,7 @@ class thd_mem_t {
         if (MAP_FAILED == mem1->dlog_beg) {
             mem1->dlog_beg = (snapT_t<T>*)calloc(sizeof(snapT_t<T>), count);
         }
+        __sync_fetch_and_add(&snap_size, sizeof(snapT_t<T>)*count);
         return eOK;
 	}
     
