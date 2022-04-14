@@ -1,0 +1,9 @@
+build/*
+*.csv
+*.sh
+*.txt
+vmem
+vmem.cpp
+list.cpp
+results/*
+.vscode/*
