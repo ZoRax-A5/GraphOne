@@ -5,3 +5,5 @@ build/*
 vmem
 vmem.cpp
 list.cpp
+results/*
+.vscode/*
