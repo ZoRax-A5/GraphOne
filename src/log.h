@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <libpmem.h>
 
 template <class T>
 class tmp_blog_t {
@@ -84,7 +85,25 @@ void blog_t<T>::alloc_edgelog(index_t count) {
     if (posix_memalign((void**)&blog_beg, 2097152, blog_count*sizeof(edgeT_t<T>))) {
         perror("posix memalign batch edge log");
     }*/
-    blog_beg = (edgeT_t<T>*)calloc(blog_count, sizeof(edgeT_t<T>));
+
+    // // Edgelog 放在 DRAM 上
+    // blog_beg = (edgeT_t<T>*)calloc(blog_count, sizeof(edgeT_t<T>));
+    // assert(blog_beg);
+
+    // Edgelog 放在 PMEM 上
+    char filePath[] = "/mnt/pmem1/zorax/testGraphOne/blogbeg.txt";
+    // size_t fileSize =  ALIGNMENT (1ULL * blog_count * sizeof(edgeT_t<T>),  PAGESIZE);
+    size_t fileSize =  blog_count * sizeof(edgeT_t<T>);
+    size_t mapped_len;
+    int is_pmem;
+    /* create a 4k pmem file and memory map it */
+    if ((blog_beg = (edgeT_t<T>*)pmem_map_file(filePath, fileSize, PMEM_FILE_CREATE, 0666, &mapped_len, &is_pmem)) == NULL)  {
+        std::cout << "Could not map pmem file :" << filePath << " error: " << strerror(errno) << std::endl;
+    }
+    if (!is_pmem){
+        std::cout << "not pmem!" << std::endl;
+    }
+    memset(blog_beg, 0, fileSize);  //pre touch, 消除page fault影响
     assert(blog_beg);
 }
 

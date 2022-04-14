@@ -6,6 +6,10 @@ using std::cout;
 using std::endl;
 using std::max;
 
+#include <libpmem.h>
+
+static uint32_t adjfilecount = 0; //Rui
+
 /*
 template <class T>
 index_t TO_CACHELINE<T>(index_t count, index_t meta_size)
@@ -142,7 +146,24 @@ class thd_mem_t {
         mem1->delta_size = size;
         mem1->adjlog_beg = (char*)alloc_huge(size);
         if (MAP_FAILED == mem1->adjlog_beg) {
-            mem1->adjlog_beg = (char*)malloc(size);
+            // // Adjlists 放在 DRAM 上
+            // mem1->adjlog_beg = (char*)malloc(size);
+            // assert(mem1->adjlog_beg);
+
+            // Adjlists 放在 PMEM 上
+            std::string filePath = "/mnt/pmem1/zorax/testGraphOne/delta_adjlist_" + std::to_string(__sync_fetch_and_add(&adjfilecount, 1)) + ".txt";
+            assert( access(filePath.c_str(), 'r') == -1 ); //确保文件不存在
+            size_t mapped_len;
+            int is_pmem;
+            /* create a pmem file and memory map it */
+            mem1->adjlog_beg = (char*)pmem_map_file(filePath.c_str(), size, PMEM_FILE_CREATE, 0666, &mapped_len, &is_pmem);
+            if (mem1->adjlog_beg == NULL)  {
+                std::cout << "Could not map pmem file :" << "for delta_adjlist" << " error: " << strerror(errno) << std::endl;
+            }
+            // if (!is_pmem){
+            //     std::cout << "not pmem!" << std::endl;
+            // }
+            memset(mem1->adjlog_beg, 0, size);  //pre touch, 消除page fault影响
             assert(mem1->adjlog_beg);
         }
         //cout << "alloc adj " << delta_size << endl; 

@@ -1027,21 +1027,21 @@ void test_archive(const string& idir, const string& odir)
     manager.prep_graph_adj(idir, odir);
     //g->store_graph_baseline();
     
-    //Run BFS
-    for (int i = 0; i < 1; i++){
-        manager.run_bfs();
-    }
+    // //Run BFS
+    // for (int i = 0; i < 1; i++){
+    //     manager.run_bfs();
+    // }
 
-    //Run PageRank
-    for (int i = 0; i < 1; i++){
-        manager.run_pr();
-        manager.run_pr_simple();
-    }
+    // //Run PageRank
+    // for (int i = 0; i < 1; i++){
+    //     manager.run_pr();
+    //     manager.run_pr_simple();
+    // }
     
-    //Run 1-HOP query
-    for (int i = 0; i < 1; i++){
-        manager.run_1hop();
-    }
+    // //Run 1-HOP query
+    // for (int i = 0; i < 1; i++){
+    //     manager.run_1hop();
+    // }
 }
 
 void test_user1(const string& idir, const string& odir)
@@ -1155,7 +1155,28 @@ void test_ingestion(const string& idir, const string& odir)
     //do some setup for plain graphs
     manager.setup_graph(_global_vcount);    
     manager.prep_graph2(idir, odir);
-    manager.run_bfs();
+
+    // //Run 1-HOP query
+    // for (int i = 0; i < 1; i++){
+    //     manager.run_1hop();
+    // }
+
+    // //Run 2-HOP query
+    // for (int i = 0; i < 1; i++){
+    //     manager.run_2hop();
+    // }
+
+    // //Run BFS
+    // for (int i = 0; i < 1; i++){
+    //     manager.run_bfs(1024);
+    // }
+
+    // //Run PageRank
+    // for (int i = 0; i < 1; i++){
+    //     manager.run_pr();
+    // }
+    
+    
     
     /*
     pgraph_t<T>* pgraph = manager.get_plaingraph();
