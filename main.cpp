@@ -72,11 +72,11 @@ int main(int argc, char* argv[])
     int job = 0;
 	THD_COUNT = omp_get_max_threads()-1;// - 3;
 
-    std::string statistic_filename = "pid.txt";
-    std::ofstream ofs;
-    ofs.open(statistic_filename.c_str(), std::ofstream::out);
-    ofs << getpid() << std::endl;
-    ofs.close();
+    // std::string statistic_filename = "pid.txt";
+    // std::ofstream ofs;
+    // ofs.open(statistic_filename.c_str(), std::ofstream::out);
+    // ofs << getpid() << std::endl;
+    // ofs.close();
     
     //int i = 0;
     //while (i < 100000) { usleep(10); ++i; }

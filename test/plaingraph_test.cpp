@@ -1156,25 +1156,25 @@ void test_ingestion(const string& idir, const string& odir)
     manager.setup_graph(_global_vcount);    
     manager.prep_graph2(idir, odir);
 
-    // //Run 1-HOP query
-    // for (int i = 0; i < 1; i++){
-    //     manager.run_1hop();
-    // }
+    //Run 1-HOP query
+    for (int i = 0; i < 1; i++){
+        manager.run_1hop();
+    }
 
-    // //Run 2-HOP query
-    // for (int i = 0; i < 1; i++){
-    //     manager.run_2hop();
-    // }
+    //Run 2-HOP query
+    for (int i = 0; i < 1; i++){
+        manager.run_2hop();
+    }
 
-    // //Run BFS
-    // for (int i = 0; i < 1; i++){
-    //     manager.run_bfs(1024);
-    // }
+    //Run BFS
+    for (int i = 0; i < 1; i++){
+        manager.run_bfs(1024);
+    }
 
-    // //Run PageRank
-    // for (int i = 0; i < 1; i++){
-    //     manager.run_pr();
-    // }
+    //Run PageRank
+    for (int i = 0; i < 1; i++){
+        manager.run_pr();
+    }
     
     
     

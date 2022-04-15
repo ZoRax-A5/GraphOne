@@ -17,7 +17,7 @@ mem_hop1(gview_t<T>* snaph)
 {
     srand(0);
     vid_t  v_count  = snaph->get_vcount();
-    int query_count = v_count / 10;
+    int query_count = 1 << 24L;
     vid_t* query = (vid_t*)calloc(sizeof(vid_t), query_count);
     int i1 = 0;
     while (i1 < query_count) {
@@ -93,6 +93,12 @@ mem_hop1(gview_t<T>* snaph)
     double end = mywtime();
 
     cout << "Sum = " << sum << " 1 Hop Time = " << end - start << endl;
+
+    std::string statistic_filename = "result_go.csv";
+    std::ofstream ofs;
+    ofs.open(statistic_filename.c_str(), std::ofstream::out | std::ofstream::app );
+    ofs << "," << end - start;
+    ofs.close();
 }
 
 /*
@@ -383,7 +389,7 @@ template<class T>
 void mem_hop2(gview_t<T>* snaph) 
 {
     srand(0);
-    int query_count = 4096;
+    int query_count = 1 << 14;
     vid_t v_count = snaph->get_vcount();
     hop2_t* query = (hop2_t*)calloc(sizeof(hop2_t), query_count); 
     int i1 = 0;
@@ -534,6 +540,12 @@ void mem_hop2(gview_t<T>* snaph)
     double end = mywtime();
     free(query);
     cout << "Sum2 = " << sum2 << " 2 Hop Time = " << end - start << endl;
+
+    std::string statistic_filename = "result_go.csv";
+    std::ofstream ofs;
+    ofs.open(statistic_filename.c_str(), std::ofstream::out | std::ofstream::app );
+    ofs << "," << end - start;
+    ofs.close();
 }
 
 template<class T>
@@ -661,7 +673,7 @@ void mem_bfs_simple(gview_t<T>* snaph,
 }
 
 template<class T>
-void mem_bfs(gview_t<T>* snaph,
+double mem_bfs(gview_t<T>* snaph,
         uint8_t* status, sid_t root)
 {
     int				level      = 1;
@@ -669,6 +681,18 @@ void mem_bfs(gview_t<T>* snaph,
 	sid_t			frontier   = 0;
     sid_t           v_count    = snaph->get_vcount();
     
+    srand(0);
+    int i1 = 0;
+    while (1) {
+        root = rand() % v_count;
+        if (snaph->get_degree_out(root) > 40) break;
+        i1++;
+        if (i1 >= v_count) {
+            root = 0;
+            break;
+        }
+    }
+
 	double start1 = mywtime();
     //if (snaph->get_degree_out(root) == 0) { root = 0;}
 	status[root] = level;
@@ -1047,6 +1071,12 @@ void mem_pagerank(gview_t<T>* snaph, int iteration_count)
 
 	cout << "PR Time = " << end - start << endl;
 	cout << endl;
+    
+    std::string statistic_filename = "result_go.csv";
+    std::ofstream ofs;
+    ofs.open(statistic_filename.c_str(), std::ofstream::out | std::ofstream::app );
+    ofs << "," << end - start << endl;
+    ofs.close();
 }
 
 template<class T>
