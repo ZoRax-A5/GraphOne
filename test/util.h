@@ -7,6 +7,8 @@
 #define MAP_HUGE_2MB (21 << MAP_HUGE_SHIFT)
 #endif
 
+extern uint64_t local_buf_size;
+
 short CorePin(int coreID);
 
 inline index_t upper_power_of_two(index_t v)
@@ -44,29 +46,29 @@ index_t alloc_mem_dir(const string& idirname, char** buf, bool alloc)
     }
     closedir(dir);
 
-    // local_buf 放在 DRAM 上
-    void* local_buf = mmap(0, total_size, PROT_READ|PROT_WRITE,
-                MAP_PRIVATE|MAP_ANONYMOUS|MAP_HUGETLB|MAP_HUGE_2MB, 0, 0);
+    // // local_buf 放在 DRAM 上
+    // void* local_buf = mmap(0, total_size, PROT_READ|PROT_WRITE,
+    //             MAP_PRIVATE|MAP_ANONYMOUS|MAP_HUGETLB|MAP_HUGE_2MB, 0, 0);
 
-    if (MAP_FAILED == local_buf) {
-        cout << "huge page alloc failed while reading input dir" << endl;
-        local_buf =  malloc(total_size);
+    // if (MAP_FAILED == local_buf) {
+    //     cout << "huge page alloc failed while reading input dir" << endl;
+    //     local_buf =  malloc(total_size);
+    // }
+
+    // local_buf 放在 PMEM 上
+    void* local_buf = 0;
+    char filePath[] = "/pmem/zorax/testGraphOne/local_buf.txt";
+    size_t mapped_len;
+    int is_pmem;
+    /* create a 4k pmem file and memory map it */
+    if ((local_buf = pmem_map_file(filePath, total_size, PMEM_FILE_CREATE, 0666, &mapped_len, &is_pmem)) == NULL)  {
+        std::cout << "Could not map pmem file :" << filePath << " error: " << strerror(errno) << std::endl;
     }
-
-    // // local_buf 放在 PMEM 上
-    // void* local_buf = 0;
-    // char filePath[] = "/pmem/zorax/testGraphOne/local_buf.txt";
-    // size_t mapped_len;
-    // int is_pmem;
-    // /* create a 4k pmem file and memory map it */
-    // if ((local_buf = pmem_map_file(filePath, total_size, PMEM_FILE_CREATE, 0666, &mapped_len, &is_pmem)) == NULL)  {
-    //     std::cout << "Could not map pmem file :" << filePath << " error: " << strerror(errno) << std::endl;
-    // }
-    // if (!is_pmem){
-    //     std::cout << "not pmem!" << std::endl;
-    // }
-    // // memset(local_buf, 0, total_size);  //pre touch, 消除page fault影响
-    // assert(local_buf);
+    if (!is_pmem){
+        std::cout << "not pmem!" << std::endl;
+    }
+    // memset(local_buf, 0, total_size);  //pre touch, 消除page fault影响
+    assert(local_buf);
     
     // // local_buf 放在 SSD 上
     // void* local_buf = 0;
@@ -82,6 +84,8 @@ index_t alloc_mem_dir(const string& idirname, char** buf, bool alloc)
     //     std::cout << "Could not map ssd file: " << filePath << "error: " << strerror(errno) << std::endl;
     // }
     
+    __sync_fetch_and_add(&local_buf_size, total_size);
+
     *buf = (char*)local_buf;
     return total_size;
 }

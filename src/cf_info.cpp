@@ -45,6 +45,10 @@ degree_t INVALID_DEGREE = 0xFFFFFFFF;
 uint64_t vunit_size = 0;
 uint64_t snap_size = 0;
 uint64_t global_range_size = 0;
+uint64_t elog_size = 0;
+uint64_t adjlist_size = 0;
+uint64_t local_buf_size = 0;
+
 
 using std::swap;
 

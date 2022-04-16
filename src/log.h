@@ -3,6 +3,8 @@
 #include <atomic>
 #include <libpmem.h>
 
+extern uint64_t elog_size;
+
 template <class T>
 class tmp_blog_t {
  public:
@@ -105,5 +107,7 @@ void blog_t<T>::alloc_edgelog(index_t count) {
     }
     memset(blog_beg, 0, fileSize);  //pre touch, 消除page fault影响
     assert(blog_beg);
+
+    __sync_fetch_and_add(&elog_size, fileSize);
 }
 

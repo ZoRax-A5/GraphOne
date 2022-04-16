@@ -11,6 +11,7 @@ using std::max;
 static uint32_t adjfilecount = 0; //Rui
 extern uint64_t vunit_size;
 extern uint64_t snap_size;
+extern uint64_t adjlist_size;
 
 /*
 template <class T>
@@ -170,6 +171,7 @@ class thd_mem_t {
             memset(mem1->adjlog_beg, 0, size);  //pre touch, 消除page fault影响
             assert(mem1->adjlog_beg);
         }
+        __sync_fetch_and_add(&adjlist_size, size);
         //cout << "alloc adj " << delta_size << endl; 
         return eOK;
     }
