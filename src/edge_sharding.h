@@ -6,6 +6,7 @@
 extern vid_t RANGE_COUNT;
 extern vid_t RANGE_2DSHIFT;
 extern uint64_t global_range_size;
+extern uint64_t global_range_in_size;
 
 #define GET_VARIABLE_NAME(Variable) (#Variable)
 
@@ -86,6 +87,9 @@ class edge_shard_t {
     thd_local_t* thd_local;
     thd_local_t* thd_local_in;
 
+    uint64_t _global_range_size = 0;
+    uint64_t _global_range_in_size = 0;
+
  public:
     ~edge_shard_t();
     edge_shard_t(blog_t<T>* binary_log);
@@ -148,15 +152,18 @@ void edge_shard_t<T>::cleanup()
     #pragma omp for schedule (static)
     for (vid_t i = 0; i < RANGE_COUNT; ++i) {
         if (global_range[i].edges) {
-            __sync_fetch_and_add(&global_range_size, -sizeof(edgeT_t<T>)*global_range[i].count);
-            // free(global_range[i].edges);
-            pmem_unmap(global_range[i].edges, global_range[i].count * sizeof(edgeT_t<T>));
+            if (_global_range_size > global_range_size) global_range_size = _global_range_size;
+            _global_range_size = 0;
+            free(global_range[i].edges);
+            // pmem_unmap(global_range[i].edges, global_range[i].count * sizeof(edgeT_t<T>));
             global_range[i].edges = 0;
             global_range[i].count = 0;
         }
         if (global_range_in[i].edges) {
-            // free(global_range_in[i].edges);
-            pmem_unmap(global_range_in[i].edges, global_range_in[i].count * sizeof(edgeT_t<T>));
+            if (_global_range_in_size > global_range_in_size) global_range_in_size = _global_range_in_size;
+            _global_range_in_size = 0;
+            free(global_range_in[i].edges);
+            // pmem_unmap(global_range_in[i].edges, global_range_in[i].count * sizeof(edgeT_t<T>));
             global_range_in[i].edges = 0;
             global_range_in[i].count = 0;
         }
@@ -617,36 +624,42 @@ void edge_shard_t<T>::prefix_sum(global_range_t<T>* global_range, thd_local_t* t
         global_range[i].count = total;
         global_range[i].edges = 0;
         if (total != 0) {
-            // allocate global_range on pmem
-            std::string NVMPATH0 = "/pmem/zorax/testGraphOne/";
-            std::string NVMPATH1 = "/mnt/pmem1/zorax/testGraphOne/";
-            std::string global_range_file;
-            if(is_out_graph) global_range_file = NVMPATH0 + "global_range_pool_" + std::to_string(i) + ".txt";
-            else global_range_file = NVMPATH1 + "global_range_pool_" + std::to_string(i) + ".txt";
-            assert( access(global_range_file.c_str(), 'r') == -1 );
-            size_t mapped_len;
-            int is_pmem;
-            size_t size = total * sizeof(edgeT_t<T>);
-            global_range[i].edges = (edgeT_t<T>*)pmem_map_file(global_range_file.c_str(), size, PMEM_FILE_CREATE, 0666, &mapped_len, &is_pmem);
-            if (0 == global_range[i].edges) {
-                std::cout << "Could not pmem_map_file for :" << global_range_file << " error: " << strerror(errno) << std::endl;
-                assert(0);
-            }
-            if (!is_pmem){
-                std::cout << "pmem_map_file: not in pmem" << std::endl;
-            }
-            if (mapped_len != size){
-                std::cout << "pmem_map_file: mapped_len != size" << std::endl;
-            }
-            memset(global_range[i].edges, 0, size);
-
-            // // allocate global_range on dram
-            // global_range[i].edges = (edgeT_t<T>*)calloc(total, sizeof(edgeT_t<T>));
+            // // allocate global_range on pmem
+            // std::string NVMPATH0 = "/pmem/zorax/testGraphOne/";
+            // std::string NVMPATH1 = "/mnt/pmem1/zorax/testGraphOne/";
+            // std::string global_range_file;
+            // if(is_out_graph) global_range_file = NVMPATH0 + "global_range_pool_" + std::to_string(i) + ".txt";
+            // else global_range_file = NVMPATH1 + "global_range_pool_" + std::to_string(i) + ".txt";
+            // assert( access(global_range_file.c_str(), 'r') == -1 );
+            // size_t mapped_len;
+            // int is_pmem;
+            // size_t size = total * sizeof(edgeT_t<T>);
+            // global_range[i].edges = (edgeT_t<T>*)pmem_map_file(global_range_file.c_str(), size, PMEM_FILE_CREATE, 0666, &mapped_len, &is_pmem);
             // if (0 == global_range[i].edges) {
-            //     cout << total << " bytes of allocation failed" << endl;
+            //     std::cout << "Could not pmem_map_file for :" << global_range_file << " error: " << strerror(errno) << std::endl;
             //     assert(0);
             // }
-            __sync_fetch_and_add(&global_range_size, size);
+            // if (!is_pmem){
+            //     std::cout << "pmem_map_file: not in pmem" << std::endl;
+            // }
+            // if (mapped_len != size){
+            //     std::cout << "pmem_map_file: mapped_len != size" << std::endl;
+            // }
+            // memset(global_range[i].edges, 0, size);
+
+            // allocate global_range on dram
+            global_range[i].edges = (edgeT_t<T>*)calloc(total, sizeof(edgeT_t<T>));
+            if (0 == global_range[i].edges) {
+                cout << total << " bytes of allocation failed" << endl;
+                assert(0);
+            }
+            size_t size = total * sizeof(edgeT_t<T>);
+            if(is_out_graph) {
+                __sync_fetch_and_add(&_global_range_size, size);
+            } else {
+                __sync_fetch_and_add(&_global_range_in_size, size);
+            }
+            std::cout << "total = " << total << std::endl;
         }
     }
 }

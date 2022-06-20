@@ -686,10 +686,10 @@ double mem_bfs(gview_t<T>* snaph,
     int i1 = 0;
     while (1) {
         root = rand() % v_count;
-        if (snaph->get_degree_out(root) > 30) break;
+        if (snaph->get_degree_out(root) > 20) break;
         i1++;
         if (i1 >= v_count) {
-            root = 0;
+            root = rand() % v_count;
             break;
         }
     }
