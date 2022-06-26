@@ -16,6 +16,7 @@
 extern uint64_t vunit_size;
 extern uint64_t snap_size;
 extern uint64_t global_range_size;
+extern uint64_t global_range_in_size;
 extern uint64_t local_buf_size;
 extern uint64_t elog_size;
 extern uint64_t adjlist_size;
@@ -335,7 +336,16 @@ void plaingraph_manager_t<T>::prep_graph_adj(const string& idirname, const strin
     blog->blog_mask = new_count -1;
     blog->blog_count = count;
     
+    std::string statistic_filename = "result_go.csv";
+    std::ofstream ofs;
+
+    double start1 = mywtime();
     read_idir_text(idirname, odirname, pgraph, file_and_insert);
+    double end1 = mywtime();
+    ofs.open(statistic_filename.c_str(), std::ofstream::out | std::ofstream::app );
+    ofs << "load:" << end1 - start1 << std::endl;
+    ofs.close();
+    exit(0);
 
     double start = mywtime();
     
@@ -362,15 +372,15 @@ void plaingraph_manager_t<T>::prep_graph_adj(const string& idirname, const strin
     std::cout << "Global range total size = " << global_range_size / 1024.0 / 1024.0 / 1024.0 << " GB." << std::endl;
     std::cout << "Elog total size         = " << elog_size / 1024.0 / 1024.0 / 1024.0 << " GB." << std::endl;
     std::cout << "adjlist total size      = " << adjlist_size / 1024.0 / 1024.0 / 1024.0 << " GB." << std::endl;
+    std::cout << "Local buf total size    = " << local_buf_size / 1024.0 / 1024.0 / 1024.0 << " GB." << std::endl;
 
     cout << "Make graph time = " << end - start << endl;
 
-    std::string statistic_filename = "result_go.csv";
-    std::ofstream ofs;
+
     ofs.open(statistic_filename.c_str(), std::ofstream::out | std::ofstream::app );
     ofs << end - start << "," << vm << "," << rss << "," 
         << vunit_size / 1024.0 / 1024.0 / 1024.0 << "," << snap_size / 1024.0 / 1024.0 / 1024.0 << "," << global_range_size / 1024.0 / 1024.0 / 1024.0 << ","
-        << elog_size / 1024.0 / 1024.0 / 1024.0 << "," << adjlist_size / 1024.0 / 1024.0 / 1024.0 << std::endl;
+        << elog_size / 1024.0 / 1024.0 / 1024.0 << "," << adjlist_size / 1024.0 / 1024.0 / 1024.0 << "," << local_buf_size / 1024.0 / 1024.0 / 1024.0 << std::endl;
     ofs.close();
 }
 
@@ -411,6 +421,27 @@ void plaingraph_manager_t<T>::prep_graph_mix(const string& idirname, const strin
     }
     
     double end = mywtime ();
+
+    double vm, rss;
+    pid_t proc_id = getpid();
+    process_mem_usage(proc_id, vm, rss);
+
+    cout << "VIRT: " << vm << " GB; RES: " << rss << " GB." << endl;
+    std::cout << "Vunit bulk total size   = " << vunit_size / 1024.0 / 1024.0 / 1024.0 << " GB." << std::endl;
+    std::cout << "Snap bulk total size    = " << snap_size / 1024.0 / 1024.0 / 1024.0 << " GB." << std::endl;
+    std::cout << "Global range total size = " << global_range_size / 1024.0 / 1024.0 / 1024.0 << " GB." << std::endl;
+    std::cout << "Elog total size         = " << elog_size / 1024.0 / 1024.0 / 1024.0 << " GB." << std::endl;
+    std::cout << "adjlist total size      = " << adjlist_size / 1024.0 / 1024.0 / 1024.0 << " GB." << std::endl;
+    std::cout << "Local buf total size    = " << local_buf_size / 1024.0 / 1024.0 / 1024.0 << " GB." << std::endl;
+
+    std::string statistic_filename = "result_go.csv";
+    std::ofstream ofs;
+    ofs.open(statistic_filename.c_str(), std::ofstream::out | std::ofstream::app );
+    ofs << end - start << "," << vm << "," << rss << "," 
+        << vunit_size / 1024.0 / 1024.0 / 1024.0 << "," << snap_size / 1024.0 / 1024.0 / 1024.0 << "," << global_range_size / 1024.0 / 1024.0 / 1024.0 << ","
+        << elog_size / 1024.0 / 1024.0 / 1024.0 << "," << adjlist_size / 1024.0 / 1024.0 / 1024.0 << "," << local_buf_size / 1024.0 / 1024.0 / 1024.0;
+    ofs.close();
+
     cout << "Make graph time = " << end - start << endl;
 }
 
@@ -542,20 +573,25 @@ void plaingraph_manager_t<T>::prep_graph2(const string& idirname, const string& 
     double vm = vm2 > vm3 ? vm2 : vm3;
     double rss = rss2 > rss3 ? rss2 : rss3;
 
-    cout << "VIRT: " << vm / 1024.0 << " GB; RES: " << rss / 1024.0 << " GB." << endl;
-    std::cout << "Vunit bulk total size   = " << vunit_size / 1024.0 / 1024.0 / 1024.0 << " GB." << std::endl;
-    std::cout << "Snap bulk total size    = " << snap_size / 1024.0 / 1024.0 / 1024.0 << " GB." << std::endl;
-    std::cout << "Global range total size = " << global_range_size / 1024.0 / 1024.0 / 1024.0 << " GB." << std::endl;
-    std::cout << "Elog total size         = " << elog_size / 1024.0 / 1024.0 / 1024.0 << " GB." << std::endl;
-    std::cout << "adjlist total size      = " << adjlist_size / 1024.0 / 1024.0 / 1024.0 << " GB." << std::endl;
-    std::cout << "Local buf total size    = " << local_buf_size / 1024.0 / 1024.0 / 1024.0 << " GB." << std::endl;
+    double KB = 1024.0;
+    double GB = 1024.0 * 1024.0 * 1024.0;
+
+    cout << "VIRT: " << vm / KB << " GB; RES: " << rss / KB << " GB." << endl;
+    std::cout << "Vunit bulk total size   = " << vunit_size / GB << " GB." << std::endl;
+    std::cout << "Snap bulk total size    = " << snap_size / GB << " GB." << std::endl;
+    std::cout << "Global range total size = " << global_range_size / GB << " GB." << std::endl;
+    std::cout << "Global range total size = " << global_range_in_size / GB << " GB." << std::endl;
+    std::cout << "Elog total size         = " << elog_size / GB << " GB." << std::endl;
+    std::cout << "adjlist total size      = " << adjlist_size / GB << " GB." << std::endl;
+    std::cout << "Local buf total size    = " << local_buf_size / GB << " GB." << std::endl;
 
     std::string statistic_filename = "result_go.csv";
     std::ofstream ofs;
     ofs.open(statistic_filename.c_str(), std::ofstream::out | std::ofstream::app );
-    ofs << end - start << "," << vm / 1024.0 << "," << rss / 1024.0 << "," 
-        << vunit_size / 1024.0 / 1024.0 / 1024.0 << "," << snap_size / 1024.0 / 1024.0 / 1024.0 << "," << global_range_size / 1024.0 / 1024.0 / 1024.0 << ","
-        << elog_size / 1024.0 / 1024.0 / 1024.0 << "," << adjlist_size / 1024.0 / 1024.0 / 1024.0 << "," << local_buf_size / 1024.0 / 1024.0 / 1024.0;
+    ofs << end - start << "," << vm / KB << "," << rss / KB << "," 
+        << vunit_size / GB << "," << snap_size / GB << "," 
+        << global_range_size / GB << "," << global_range_in_size / GB << ","
+        << elog_size / GB << "," << adjlist_size / GB << "," << local_buf_size / GB;
     ofs.close();
 }
 
@@ -623,21 +659,25 @@ void plaingraph_manager_t<T>::run_bfs(sid_t root/*=1*/)
     end = mywtime();
     cout << "static View creation = " << end - start << endl;    
     
-    uint8_t* level_array = 0;
-    level_array = (uint8_t*) calloc(snaph->get_vcount(), sizeof(uint8_t));
-    start = mywtime();
-    for (int i = 0; i < 10; i++){
+    double bfs_time = 0;
+    
+    for (int i = 0; i < 3; i++){
+        uint8_t* level_array = 0;
+        level_array = (uint8_t*) calloc(snaph->get_vcount(), sizeof(uint8_t));
+        start = mywtime();
         mem_bfs<T>(snaph, level_array, root);
+        end = mywtime();
+        free(level_array);
+        bfs_time += end - start;
     }
-    end = mywtime();
-    cout << "BFS complex = " << end - start << endl;    
+    
+    cout << "BFS complex = " << bfs_time << endl;    
     std::string statistic_filename = "result_go.csv";
     std::ofstream ofs;
     ofs.open(statistic_filename.c_str(), std::ofstream::out | std::ofstream::app );
-    ofs << "," << end - start;
+    ofs << "," << bfs_time;
     ofs.close();  
     
-    free(level_array);
     /*
     level_array = (uint8_t*) calloc(snaph->get_vcount(), sizeof(uint8_t));
     start = mywtime();

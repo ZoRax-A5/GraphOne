@@ -4,6 +4,8 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include "graph.h"
+#include <sys/types.h>
+#include <unistd.h>
 
 #define no_argument 0
 #define required_argument 1 
@@ -71,6 +73,12 @@ int main(int argc, char* argv[])
     int category = 0;
     int job = 0;
 	THD_COUNT = omp_get_max_threads()-1;// - 3;
+
+    pid_t proc_id = getpid();
+    std::string statistic_filename = "pid.txt";
+    std::ofstream ifs(statistic_filename);
+    ifs << proc_id;
+    ifs.close();
 
     // std::string statistic_filename = "pid.txt";
     // std::ofstream ofs;
