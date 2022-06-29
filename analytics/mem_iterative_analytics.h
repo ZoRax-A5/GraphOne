@@ -1,6 +1,12 @@
 #pragma once
 #include <omp.h>
+#include <random>
+#include <utility>
+#include <vector>
+#include <unordered_map>
 #include <algorithm>
+#include <cinttypes>
+#include <functional>
 
 #include "graph_view.h"
 
@@ -1567,4 +1573,227 @@ inline void print_bfs_summary(uint8_t* status, uint8_t level, vid_t v_count)
         }
         cout << " Level = " << l << " count = " << vid_count << endl;
     }
+}
+
+bool compare_and_swap(vid_t &x, vid_t &old_val, vid_t &new_val) {
+    return __sync_bool_compare_and_swap(reinterpret_cast<uint32_t*>(&x),
+                                    reinterpret_cast<const uint32_t&>(old_val),
+                                    reinterpret_cast<const uint32_t&>(new_val));
+}
+
+// Returns k pairs with largest values from list of key-value pairs
+template<typename KeyT, typename ValT>
+std::vector<std::pair<ValT, KeyT>> TopK(
+    const std::vector<std::pair<KeyT, ValT>> &to_sort, size_t k) {
+    std::vector<std::pair<ValT, KeyT>> top_k;
+    ValT min_so_far = 0;
+    for (auto kvp : to_sort) {
+        if ((top_k.size() < k) || (kvp.second > min_so_far)) {
+            top_k.push_back(std::make_pair(kvp.second, kvp.first));
+            std::sort(top_k.begin(), top_k.end(),
+                        std::greater<std::pair<ValT, KeyT>>());
+            if (top_k.size() > k)
+                top_k.resize(k);
+            min_so_far = top_k.back().first;
+        }
+    }
+  return top_k;
+}
+
+// Place nodes u and v in same component of lower component ID
+void Link(vid_t u, vid_t v, vid_t* comp) {
+  vid_t p1 = comp[u];
+  vid_t p2 = comp[v];
+  while (p1 != p2) {
+    vid_t high = p1 > p2 ? p1 : p2;
+    vid_t low = p1 + (p2 - high);
+    vid_t p_high = comp[high];
+    // Was already 'low' or succeeded in writing 'low'
+    if ((p_high == low) ||
+        (p_high == high && compare_and_swap(comp[high], high, low)))
+      break;
+    p1 = comp[comp[high]];
+    p2 = comp[low];
+  }
+}
+
+// Reduce depth of tree for each component to 1 by crawling up parents
+void Compress(vid_t v_count, vid_t* comp) {
+    #pragma omp parallel for schedule(dynamic, 16384)
+    for (vid_t n = 0; n < v_count; n++) {
+        while (comp[n] != comp[comp[n]]) {
+            comp[n] = comp[comp[n]];
+        }
+    }
+}
+
+vid_t SampleFrequentElement(vid_t* comp, vid_t v_count, index_t num_samples = 1024) {
+  std::unordered_map<vid_t, int> sample_counts(32);
+  using kvp_type = std::unordered_map<vid_t, int>::value_type;
+  // Sample elements from 'comp'
+  std::mt19937 gen;
+  std::uniform_int_distribution<vid_t> distribution(0, v_count - 1);
+  for (vid_t i = 0; i < num_samples; i++) {
+    vid_t n = distribution(gen);
+    sample_counts[comp[n]]++;
+  }
+  // Find most frequent element in samples (estimate of most frequent overall)
+  auto most_frequent = std::max_element(
+    sample_counts.begin(), sample_counts.end(),
+    [](const kvp_type& a, const kvp_type& b) { return a.second < b.second; });
+  float frac_of_graph = static_cast<float>(most_frequent->second) / num_samples;
+  std::cout
+    << "Skipping largest intermediate component (ID: " << most_frequent->first
+    << ", approx. " << static_cast<int>(frac_of_graph * 100)
+    << "% of the graph)" << std::endl;
+  return most_frequent->first;
+}
+
+template<class T>
+double test_connected_components(gview_t<T>* snaph, index_t neighbor_rounds = 0) {
+    vid_t v_count = snaph->get_vcount();
+    vid_t* comp = (vid_t*)calloc(sizeof(vid_t), v_count);
+    
+    double start = mywtime();
+
+    // Initialize each node to a single-node self-pointing tree
+    #pragma omp parallel for
+    for (vid_t v = 0; v < v_count; v++) {
+        comp[v] = v;
+    }
+    
+    degree_t      delta_degree = 0;
+    degree_t        nebr_count = 0;
+    degree_t      local_degree = 0;
+    
+    delta_adjlist_t<T>* delta_adjlist;
+    T* local_adjlist = 0;
+
+    degree_t      delta_degree1 = 0;
+    degree_t        nebr_count1 = 0;
+    degree_t      local_degree1 = 0;
+    
+    delta_adjlist_t<T>* delta_adjlist1;
+    T* local_adjlist1 = 0;
+
+    sid_t sid = 0;
+    sid_t sid1 = 0;
+    // degree_t d = 0;
+    // vid_t* vlist = 0;
+
+    // Process a sparse sampled subgraph first for approximating components.
+    // Sample by processing a fixed number of neighbors for each node (see paper)
+    
+    #pragma omp parallel for schedule(dynamic, 16384)
+    for (index_t r = 0; r < neighbor_rounds; ++r) {
+        for (vid_t u = 0; u < v_count; u++) {
+            degree_t d = 0;
+            vid_t* vlist = 0;
+            delta_adjlist = snaph->get_nebrs_archived_out(u);
+            nebr_count = snaph->get_degree_out(u);
+            if (0 != delta_adjlist && nebr_count != 0) {
+                delta_degree = nebr_count;
+                vlist = (vid_t*)calloc(sizeof(vid_t), nebr_count);
+                while (delta_adjlist != 0 && delta_degree > 0) {
+                    local_adjlist = delta_adjlist->get_adjlist();
+                    local_degree = delta_adjlist->get_nebrcount();
+                    degree_t i_count = min(local_degree, delta_degree);
+                    for (degree_t i = 0; i < i_count; ++i) {
+                        sid = get_sid(local_adjlist[i]);
+                        vlist[d++] = sid;
+                    }
+                    delta_adjlist = delta_adjlist->get_next();
+                    delta_degree -= local_degree;
+                }
+            }
+            for (vid_t v = r; v < d; v++) {
+                Link(u, vlist[v], comp);
+                // Link(u, v, comp);
+                break;
+            }
+        }
+        Compress(v_count, comp);
+    }
+
+    vid_t c = SampleFrequentElement(comp, v_count);
+    // #pragma omp parallel for schedule(dynamic, 16384)
+    for (vid_t u = 0; u < v_count; u++) {
+        if (comp[u] == c) continue;
+        degree_t d = 0;
+        vid_t* vlist = 0;
+        delta_adjlist = snaph->get_nebrs_archived_out(u);
+        nebr_count = snaph->get_degree_out(u);
+        if (0 != delta_adjlist && nebr_count != 0) {
+            delta_degree = nebr_count;
+            vlist = (vid_t*)calloc(sizeof(vid_t), nebr_count);
+            while (delta_adjlist != 0 && delta_degree > 0) {
+                local_adjlist = delta_adjlist->get_adjlist();
+                local_degree = delta_adjlist->get_nebrcount();
+                degree_t i_count = min(local_degree, delta_degree);
+                for (degree_t i = 0; i < i_count; ++i) {
+                    sid = get_sid(local_adjlist[i]);
+                    vlist[d++] = sid;
+                }
+                delta_adjlist = delta_adjlist->get_next();
+                delta_degree -= local_degree;
+            }
+        }
+        for (vid_t v = neighbor_rounds; v < d; v++) {
+            Link(u, vlist[v], comp);
+            // Link(u, v, comp);
+        }
+
+        // To support directed graphs, process reverse graph completely
+        degree_t d1 = 0;
+        vid_t* vlist1 = 0;
+        delta_adjlist1 = snaph->get_nebrs_archived_in(u);
+        nebr_count1 = snaph->get_degree_in(u);
+        if (0 != delta_adjlist1 && nebr_count1 != 0) {
+            delta_degree1 = nebr_count1;
+            vlist1 = (vid_t*)calloc(sizeof(vid_t), nebr_count1);
+            while (delta_adjlist1 != 0 && delta_degree1 > 0) {
+                local_adjlist1 = delta_adjlist1->get_adjlist();
+                local_degree1 = delta_adjlist1->get_nebrcount();
+                degree_t i_count = min(local_degree1, delta_degree1);
+                for (degree_t i = 0; i < i_count; ++i) {
+                    sid1 = get_sid(local_adjlist1[i]);
+                    vlist1[d1++] = sid1;
+                }
+                delta_adjlist1 = delta_adjlist1->get_next();
+                delta_degree1 -= local_degree1;
+            }
+        }
+        for (vid_t v = 0; v < d1; v++) {
+            Link(u, vlist1[v], comp);
+            // Link(u, v, comp);
+        }
+    }
+    // Finally, 'compress' for final convergence
+    Compress(v_count, comp);
+
+    double end = mywtime();
+
+    std::string statistic_filename = "pmg_query.csv";
+    std::ofstream ofs;
+    ofs.open(statistic_filename.c_str(), std::ofstream::out | std::ofstream::app );
+    ofs << "CC Time = " << end - start << std::endl;
+    ofs << std::endl;
+    ofs.close();
+
+    cout << endl;
+    std::unordered_map<vid_t, vid_t> count;
+    for (vid_t comp_i = 0; comp_i < v_count; comp_i++)
+        count[comp_i] += 1;
+    int k = 5;
+    std::vector<std::pair<vid_t, vid_t>> count_vector;
+    count_vector.reserve(count.size());
+    for (auto kvp : count) count_vector.push_back(kvp);
+    std::vector<std::pair<vid_t, vid_t>> top_k = TopK(count_vector, k);
+    k = std::min(k, static_cast<int>(top_k.size()));
+    cout << k << " biggest clusters" << endl;
+    for (auto kvp : top_k)
+    cout << kvp.second << ":" << kvp.first << endl;
+    cout << "There are " << count.size() << " components" << endl;
+    cout << "CC Time = " << end - start << endl;
+    return end - start;
 }

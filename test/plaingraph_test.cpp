@@ -1175,6 +1175,11 @@ void test_ingestion(const string& idir, const string& odir)
     // for (int i = 0; i < 1; i++){
     //     manager.run_pr();
     // }
+
+    //Run Connect Components
+    for (int i = 0; i < 1; i++){
+        manager.run_cc();
+    }
     
     
     

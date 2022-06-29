@@ -74,6 +74,7 @@ class plaingraph_manager_t {
     void run_bfs_snb(sid_t root = 1);
     void run_1hop();
     void run_2hop();
+    void run_cc();
 };
 
 template <class T>
@@ -647,6 +648,15 @@ void plaingraph_manager_t<T>::run_bfs_snb(sid_t root/*=1*/)
     mem_bfs_snb<T>(snaph, level_array, root);
     end = mywtime();
     free(level_array);
+    delete_static_view(snaph);
+}
+
+template <class T>
+void plaingraph_manager_t<T>::run_cc()
+{
+    pgraph_t<T>* pgraph1 = (pgraph_t<T>*)get_plaingraph();
+    snap_t<T>* snaph = create_static_view(pgraph1, STALE_MASK|V_CENTRIC);
+    test_connected_components<T>(snaph, 2);
     delete_static_view(snaph);
 }
 
