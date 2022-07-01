@@ -103,11 +103,13 @@ template <class T>
 void  onesnb_t<T>::add_nebr_noatomic(vid_t vid, T sid) 
 {
     vunit_t<T>* v_unit = this->get_vunit(vid); 
-    delta_adjlist_t<T>* adj_list1 = v_unit->adj_list;
+
+    index_t adj_list1 = v_unit->adj_list;
+
     #ifndef BULK 
-    if (adj_list1 == 0 || adj_list1->get_nebrcount() >= adj_list1->get_maxcount()) {
+    if (adj_list1 == NULL_OFFSET || file_delta_adjlist_t<T>::get_nebrcount(adj_list1) >= file_delta_adjlist_t<T>::get_maxcount(adj_list1)) {
         
-        delta_adjlist_t<T>* adj_list = 0;
+        index_t adj_list = NULL_OFFSET;
         snapT_t<T>* curr = v_unit->get_snapblob();
         degree_t new_count = get_total(curr->degree);
         degree_t max_count = new_count;
@@ -120,8 +122,5 @@ void  onesnb_t<T>::add_nebr_noatomic(vid_t vid, T sid)
         adj_list1 = adj_list;
     }
     #endif
-    //if (IS_DEL(get_sid(sid))) { 
-    //    return del_nebr_noatomic(vid, sid);
-    //}
-    adj_list1->add_nebr_noatomic(sid);
+    file_delta_adjlist_t<T>::add_nebr_noatomic(adj_list1, sid);
 }

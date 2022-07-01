@@ -106,6 +106,7 @@ typedef uint16_t vflag_t;
 #define TID_TO_SFLAG(tid) (1L << tid)
 #define WORD_COUNT(count) ((count + 63) >> 6)
 
+extern index_t NULL_OFFSET;
 extern propid_t INVALID_PID;
 extern tid_t    INVALID_TID;
 extern sid_t    INVALID_SID;

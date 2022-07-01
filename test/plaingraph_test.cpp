@@ -1159,19 +1159,19 @@ void test_ingestion(const string& idir, const string& odir)
     manager.prep_graph2(idir, odir);
 
     //Run 1-HOP query
-    for (int i = 0; i < 1; i++){
-        manager.run_1hop();
-    }
+    // for (int i = 0; i < 1; i++){
+    //     manager.run_1hop();
+    // }
 
-    //Run 2-HOP query
-    for (int i = 0; i < 1; i++){
-        manager.run_2hop();
-    }
+    // //Run 2-HOP query
+    // for (int i = 0; i < 1; i++){
+    //     manager.run_2hop();
+    // }
 
-    //Run BFS
-    for (int i = 0; i < 1; i++){
-        manager.run_bfs(1024);
-    }
+    // //Run BFS
+    // for (int i = 0; i < 1; i++){
+    //     manager.run_bfs(1024);
+    // }
 
     // //Run PageRank
     // for (int i = 0; i < 1; i++){
@@ -1179,9 +1179,9 @@ void test_ingestion(const string& idir, const string& odir)
     // }
 
     //Run Connect Components
-    for (int i = 0; i < 1; i++){
-        manager.run_cc();
-    }
+    // for (int i = 0; i < 1; i++){
+    //     manager.run_cc();
+    // }
     
     
     

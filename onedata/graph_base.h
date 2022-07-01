@@ -139,7 +139,7 @@ protected:
 		return thd_mem->alloc_snapdegree();
 	}
 
-	inline delta_adjlist_t<T>* new_delta_adjlist(degree_t count, bool hub=false) {
+	inline index_t new_delta_adjlist(degree_t count, bool hub=false) {
         return thd_mem->alloc_adjlist(count, hub);
 	}
 

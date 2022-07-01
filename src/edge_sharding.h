@@ -659,7 +659,7 @@ void edge_shard_t<T>::prefix_sum(global_range_t<T>* global_range, thd_local_t* t
             } else {
                 __sync_fetch_and_add(&_global_range_in_size, size);
             }
-            std::cout << "total = " << total << std::endl;
+            // std::cout << "total = " << total << std::endl;
         }
     }
 }

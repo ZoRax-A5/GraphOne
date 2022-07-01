@@ -108,11 +108,16 @@ template <class T>
 void  onegraph_t<T>::add_nebr_noatomic(vid_t vid, T sid) 
 {
     vunit_t<T>* v_unit = get_vunit(vid); 
-    delta_adjlist_t<T>* adj_list1 = v_unit->adj_list;
+
+    index_t adj_list1 = v_unit->adj_list;
+
     #ifndef BULK 
-    if (adj_list1 == 0 || adj_list1->get_nebrcount() >= adj_list1->get_maxcount()) {
-        
-        delta_adjlist_t<T>* adj_list = 0;
+    
+    if (adj_list1 == NULL_OFFSET || file_delta_adjlist_t<T>::get_nebrcount(adj_list1) >= file_delta_adjlist_t<T>::get_maxcount(adj_list1)) {
+        degree_t c = file_delta_adjlist_t<T>::get_nebrcount(adj_list1);
+        degree_t mc = file_delta_adjlist_t<T>::get_maxcount(adj_list1);
+        // std::cout << "count = " << count << ", max_count = " << max_count << std::endl;
+        index_t adj_list = NULL_OFFSET;
         snapT_t<T>* curr = v_unit->get_snapblob();
         degree_t new_count = get_total(curr->degree);
         degree_t max_count = new_count;
@@ -125,81 +130,83 @@ void  onegraph_t<T>::add_nebr_noatomic(vid_t vid, T sid)
         adj_list1 = adj_list;
     }
     #endif
-    adj_list1->add_nebr_noatomic(sid);
+    file_delta_adjlist_t<T>::add_nebr_noatomic(adj_list1, sid);
 }
 
 template <class T>
 void onegraph_t<T>::add_nebr_bulk(vid_t vid, T* adj_list2, degree_t count) 
 {
-    vunit_t<T>* v_unit = get_vunit(vid); 
-    delta_adjlist_t<T>* adj_list1 = v_unit->adj_list;
-    #ifndef BULK 
-    //First add whatever spaces are left
-    if (adj_list1 != 0) {
-        degree_t left_space = adj_list1->get_maxcount() - adj_list1->get_nebrcount();
-        if (left_space < count) { 
-            adj_list1->add_nebr_bulk(adj_list2, left_space);
-            adj_list2 += left_space;
-            count -= left_space; 
-        } else {
-            adj_list1->add_nebr_bulk(adj_list2, count);
-            return;
-        }
-    }
-    if (adj_list1 == 0 || adj_list1->get_nebrcount() >= adj_list1->get_maxcount()) {
+    
+    // vunit_t<T>* v_unit = get_vunit(vid); 
+    // delta_adjlist_t<T>* adj_list1 = v_unit->adj_list;
+    // #ifndef BULK 
+    // //First add whatever spaces are left
+    // if (adj_list1 != 0) {
+    //     degree_t left_space = adj_list1->get_maxcount() - adj_list1->get_nebrcount();
+    //     if (left_space < count) { 
+    //         adj_list1->add_nebr_bulk(adj_list2, left_space);
+    //         adj_list2 += left_space;
+    //         count -= left_space; 
+    //     } else {
+    //         adj_list1->add_nebr_bulk(adj_list2, count);
+    //         return;
+    //     }
+    // }
+    // if (adj_list1 == 0 || adj_list1->get_nebrcount() >= adj_list1->get_maxcount()) {
         
-        delta_adjlist_t<T>* adj_list = 0;
-        snapT_t<T>* curr = v_unit->get_snapblob();
-        degree_t new_count = get_total(curr->degree);
-        degree_t max_count = new_count;
-        if (curr->prev) {
-            max_count -= get_total(curr->prev->degree);
-        }
+    //     delta_adjlist_t<T>* adj_list = 0;
+    //     snapT_t<T>* curr = v_unit->get_snapblob();
+    //     degree_t new_count = get_total(curr->degree);
+    //     degree_t max_count = new_count;
+    //     if (curr->prev) {
+    //         max_count -= get_total(curr->prev->degree);
+    //     }
         
-        adj_list = new_delta_adjlist(max_count, (new_count >= HUB_COUNT));
-        v_unit->set_delta_adjlist(adj_list);
-        adj_list1 = adj_list;
-    }
-    #endif
-    adj_list1->add_nebr_bulk(adj_list2, count);
+    //     adj_list = new_delta_adjlist(max_count, (new_count >= HUB_COUNT));
+    //     v_unit->set_delta_adjlist(adj_list);
+    //     adj_list1 = adj_list;
+    // }
+    // #endif
+    // adj_list1->add_nebr_bulk(adj_list2, count);
 }
 
 template <class T>
 void onegraph_t<T>::del_nebr_noatomic(vid_t vid, T sid) 
 {
-    vunit_t<T>* v_unit = get_vunit(vid); 
-    sid_t actual_sid = TO_SID(get_sid(sid)); 
-    degree_t location = find_nebr(vid, actual_sid);
-    if (INVALID_DEGREE != location) {
-        set_sid(sid, DEL_SID(location));
-        delta_adjlist_t<T>* adj_list1 = v_unit->adj_list;
-        #ifndef BULK 
-        if (adj_list1 == 0 || adj_list1->get_nebrcount() >= adj_list1->get_maxcount()) {
+    std::cout << "Unexpected Error Here! void onegraph_t<T>::del_nebr_noatomic(vid_t vid, T sid) " << std::endl;
+//     vunit_t<T>* v_unit = get_vunit(vid); 
+//     sid_t actual_sid = TO_SID(get_sid(sid)); 
+//     degree_t location = find_nebr(vid, actual_sid);
+//     if (INVALID_DEGREE != location) {
+//         set_sid(sid, DEL_SID(location));
+//         delta_adjlist_t<T>* adj_list1 = v_unit->adj_list;
+//         #ifndef BULK 
+//         if (adj_list1 == 0 || adj_list1->get_nebrcount() >= adj_list1->get_maxcount()) {
             
-            delta_adjlist_t<T>* adj_list = 0;
-            snapT_t<T>* curr = v_unit->get_snapblob();
-            degree_t new_count = get_total(curr->degree);
-            degree_t max_count = new_count;
-            if (curr->prev) {
-                max_count -= get_total(curr->prev->degree); 
-            }
+//             delta_adjlist_t<T>* adj_list = 0;
+//             snapT_t<T>* curr = v_unit->get_snapblob();
+//             degree_t new_count = get_total(curr->degree);
+//             degree_t max_count = new_count;
+//             if (curr->prev) {
+//                 max_count -= get_total(curr->prev->degree); 
+//             }
             
-            adj_list = new_delta_adjlist(max_count, (new_count >= HUB_COUNT));
-            v_unit->set_delta_adjlist(adj_list);
-            adj_list1 = adj_list;
-        }
-        #endif
-        adj_list1->add_nebr_noatomic(sid);
+//             adj_list = new_delta_adjlist(max_count, (new_count >= HUB_COUNT));
+//             v_unit->set_delta_adjlist(adj_list);
+//             adj_list1 = adj_list;
+//         }
+//         #endif
+//         adj_list1->add_nebr_noatomic(sid);
 
-     } else {
-        //Didn't find the old value. decrease del degree count
-	    snapT_t<T>* curr = v_unit->get_snapblob();
-#ifdef DEL
-		curr->degree.del_count--;
-#else
-		assert(0);
-#endif
-     }
+//      } else {
+//         //Didn't find the old value. decrease del degree count
+// 	    snapT_t<T>* curr = v_unit->get_snapblob();
+// #ifdef DEL
+// 		curr->degree.del_count--;
+// #else
+// 		assert(0);
+// #endif
+//      }
 }
 
 template <class T>
@@ -216,40 +223,41 @@ void onegraph_t<T>::compress()
 template <class T>
 status_t onegraph_t<T>::compress_nebrs(vid_t vid)
 {
-    vunit_t<T>* v_unit = get_vunit(vid); 
-    if (v_unit == 0) return eOK;
+    std::cout << "Unexpected Error Here! status_t onegraph_t<T>::compress_nebrs(vid_t vid)" << std::endl;
+    // vunit_t<T>* v_unit = get_vunit(vid); 
+    // if (v_unit == 0) return eOK;
     
    
 
-    //Get the new count
-	sdegree_t sdegree = v_unit->get_degree();
-	degree_t nebr_count = get_actual(sdegree);
-    degree_t del_count = get_delcount(sdegree);
+    // //Get the new count
+	// sdegree_t sdegree = v_unit->get_degree();
+	// degree_t nebr_count = get_actual(sdegree);
+    // degree_t del_count = get_delcount(sdegree);
     
-	//Only 1 chain, and no deletion data,then no compaction required
-    if (del_count == 0 /*&& (v_unit->delta_adjlist == v_unit->adj_list)*/) {
-        return eOK;
-    }
+	// //Only 1 chain, and no deletion data,then no compaction required
+    // if (del_count == 0 /*&& (v_unit->delta_adjlist == v_unit->adj_list)*/) {
+    //     return eOK;
+    // }
 
-    //Allocate new memory
-    delta_adjlist_t<T>* adj_list = new_delta_adjlist(nebr_count);
-    adj_list->set_nebrcount(nebr_count);
+    // //Allocate new memory
+    // delta_adjlist_t<T>* adj_list = new_delta_adjlist(nebr_count);
+    // adj_list->set_nebrcount(nebr_count);
     
-    //copy the data from older edge arrays to new edge array
-    T* ptr = adj_list->get_adjlist();
-    degree_t ret = get_nebrs(vid, ptr, sdegree);
-    assert(ret == nebr_count);
+    // //copy the data from older edge arrays to new edge array
+    // T* ptr = adj_list->get_adjlist();
+    // degree_t ret = get_nebrs(vid, ptr, sdegree);
+    // assert(ret == nebr_count);
 
-    delta_adjlist_t<T>* old_adjlist = v_unit->delta_adjlist;
-    //replace the edge array atomically
-    /*
-    if(true != __sync_bool_compare_and_swap(&v_unit->delta_adjlist, old_adjlist, adj_list)) {
-        assert(0);
-    }*/
-    v_unit->delta_adjlist = adj_list;
-    v_unit->adj_list = adj_list;
-    v_unit->compress_degree();
-    delete_delta_adjlist(old_adjlist, true);//chain free
+    // delta_adjlist_t<T>* old_adjlist = v_unit->delta_adjlist;
+    // //replace the edge array atomically
+    // /*
+    // if(true != __sync_bool_compare_and_swap(&v_unit->delta_adjlist, old_adjlist, adj_list)) {
+    //     assert(0);
+    // }*/
+    // v_unit->delta_adjlist = adj_list;
+    // v_unit->adj_list = adj_list;
+    // v_unit->compress_degree();
+    // delete_delta_adjlist(old_adjlist, true);//chain free
     return eOK;
 }
 
@@ -296,158 +304,161 @@ status_t onegraph_t<T>::evict_old_adjlist(vid_t vid, degree_t degree)
 template <class T>
 degree_t onegraph_t<T>::get_nebrs(vid_t vid, T* ptr, sdegree_t count/*,edgeT_t<T>* edges, index_t marker*/)
 {
-    vunit_t<T>* v_unit = get_vunit(vid); 
-    if (v_unit == 0) return 0;
+    std::cout << "Unexpected Error Here! degree_t onegraph_t<T>::get_nebrs(vid_t vid, T* ptr, sdegree_t count/*,edgeT_t<T>* edges, index_t marker*/)" << std::endl;
+    // vunit_t<T>* v_unit = get_vunit(vid); 
+    // if (v_unit == 0) return 0;
 
-    degree_t del_count = get_delcount(count);
+    // degree_t del_count = get_delcount(count);
     
-    //traverse the delta adj list this far
-    degree_t delta_degree = get_total(count); 
-    delta_adjlist_t<T>* delta_adjlist = v_unit->delta_adjlist;
+    // //traverse the delta adj list this far
+    // degree_t delta_degree = get_total(count); 
+    // delta_adjlist_t<T>* delta_adjlist = v_unit->delta_adjlist;
     
-    T* local_adjlist = 0;
-    degree_t local_degree = 0;
-    degree_t i_count = 0;
-    degree_t total_count = 0;
-    vid_t src_vid;
+    // T* local_adjlist = 0;
+    // degree_t local_degree = 0;
+    // degree_t i_count = 0;
+    // degree_t total_count = 0;
+    // vid_t src_vid;
     
-    if (0 == del_count) {
-        while (delta_adjlist != 0 && delta_degree > 0) {
-            local_adjlist = delta_adjlist->get_adjlist();
-            local_degree = delta_adjlist->get_nebrcount();
-            i_count = min(local_degree, delta_degree);
-            memcpy(ptr+total_count, local_adjlist, sizeof(T)*i_count);
-            total_count+=i_count;
+    // if (0 == del_count) {
+    //     while (delta_adjlist != 0 && delta_degree > 0) {
+    //         local_adjlist = delta_adjlist->get_adjlist();
+    //         local_degree = delta_adjlist->get_nebrcount();
+    //         i_count = min(local_degree, delta_degree);
+    //         memcpy(ptr+total_count, local_adjlist, sizeof(T)*i_count);
+    //         total_count+=i_count;
             
-            delta_adjlist = delta_adjlist->get_next();
-            delta_degree -= local_degree;
-        }
-        /*for (index_t j=1; j <= marker && total_count<delta_degree; ++j){
-            src_vid = TO_VID(get_src(edges[marker-j]));
-            if (src_vid == vid) {
-                ptr[total_count++] = edges[marker-j].dst_id;
-            }
-        }*/
-    } else {
-        degree_t nebr_count = get_actual(count);
-        degree_t other_count = delta_degree - nebr_count;
-        degree_t* del_pos = (degree_t*)calloc(2*del_count, sizeof(degree_t));
-        T* others = (T*)calloc(other_count, sizeof(T));
+    //         delta_adjlist = delta_adjlist->get_next();
+    //         delta_degree -= local_degree;
+    //     }
+    //     /*for (index_t j=1; j <= marker && total_count<delta_degree; ++j){
+    //         src_vid = TO_VID(get_src(edges[marker-j]));
+    //         if (src_vid == vid) {
+    //             ptr[total_count++] = edges[marker-j].dst_id;
+    //         }
+    //     }*/
+    // } else {
+    //     degree_t nebr_count = get_actual(count);
+    //     degree_t other_count = delta_degree - nebr_count;
+    //     degree_t* del_pos = (degree_t*)calloc(2*del_count, sizeof(degree_t));
+    //     T* others = (T*)calloc(other_count, sizeof(T));
         
-        degree_t pos = 0;
-        degree_t idel = 0;
-        degree_t other_pos = 0;
-        bool is_del = false;
+    //     degree_t pos = 0;
+    //     degree_t idel = 0;
+    //     degree_t other_pos = 0;
+    //     bool is_del = false;
 
-        while (delta_adjlist != 0 && delta_degree > 0) {
-            local_adjlist = delta_adjlist->get_adjlist();
-            local_degree = delta_adjlist->get_nebrcount();
-            i_count = min(local_degree, delta_degree);
+    //     while (delta_adjlist != 0 && delta_degree > 0) {
+    //         local_adjlist = delta_adjlist->get_adjlist();
+    //         local_degree = delta_adjlist->get_nebrcount();
+    //         i_count = min(local_degree, delta_degree);
             
-            for (degree_t i = 0; i < i_count; ++i) {
-                is_del = IS_DEL(get_sid(local_adjlist[i])); 
-                if (is_del) {
-                    pos = UNDEL_SID(get_sid(local_adjlist[i]));
-                    if (total_count < nebr_count){
-                        del_pos[idel++] = pos;
-                        del_pos[idel++] = total_count;
-                    } else {
-                        if (pos < nebr_count) {
-                            del_pos[idel++] = pos;
-                        }
-                    }
-                } 
-                if (total_count < nebr_count) {//normal case
-                    ptr[total_count++] = local_adjlist[i];
-                } else {//space is full
-                    others[other_pos++] = local_adjlist[i];
-                    if (is_del && pos >= total_count) {
-                        others[pos-total_count] = local_adjlist[i];
-                    }
-                }
-            }
+    //         for (degree_t i = 0; i < i_count; ++i) {
+    //             is_del = IS_DEL(get_sid(local_adjlist[i])); 
+    //             if (is_del) {
+    //                 pos = UNDEL_SID(get_sid(local_adjlist[i]));
+    //                 if (total_count < nebr_count){
+    //                     del_pos[idel++] = pos;
+    //                     del_pos[idel++] = total_count;
+    //                 } else {
+    //                     if (pos < nebr_count) {
+    //                         del_pos[idel++] = pos;
+    //                     }
+    //                 }
+    //             } 
+    //             if (total_count < nebr_count) {//normal case
+    //                 ptr[total_count++] = local_adjlist[i];
+    //             } else {//space is full
+    //                 others[other_pos++] = local_adjlist[i];
+    //                 if (is_del && pos >= total_count) {
+    //                     others[pos-total_count] = local_adjlist[i];
+    //                 }
+    //             }
+    //         }
             
-            delta_adjlist = delta_adjlist->get_next();
-            delta_degree -= local_degree;
-        }
-        assert(other_pos <= other_count);
-        assert(idel <= 2*del_count);
-        while (other_pos != 0 && idel !=0) {
-            if (IS_DEL(get_sid(others[--other_pos]))) continue;
-            pos = del_pos[--idel];
-            ptr[pos] = others[other_pos];    
-        }
-        /*
-        //handle the edge log
-        index_t rem_count = 0;
-        index_t new_del = 0;
-        for (index_t j = 1, k =0; j <= marker && k < rem_count; ++j) {
-            src_vid = TO_VID(get_src(edges[marker-j]));
-            if (src_vid != vid) continue;
-            is_del = IS_DEL(get_src(edges[marker-j])); 
-            if (!is_del && idel !=0) {
-                pos = del_pos[--idel];
-                ptr[pos] = others[other_pos];    
-            } else {
-                new_del += (true == is_del);
-                if (total_count < nebr_count) {//normal case
-                    ptr[total_count++] = edges[marker-j].dst_id;
-                } else {//space is full
-                    others[other_pos++] = edges[marker-j].dst_id;
-                }
-            }
-            ++k;
-        }
-        //Need to handle if more deletion has been observed.
-        if (new_del) { }*/
-        free(del_pos);
-        free(others);
-    }
-    return total_count;
+    //         delta_adjlist = delta_adjlist->get_next();
+    //         delta_degree -= local_degree;
+    //     }
+    //     assert(other_pos <= other_count);
+    //     assert(idel <= 2*del_count);
+    //     while (other_pos != 0 && idel !=0) {
+    //         if (IS_DEL(get_sid(others[--other_pos]))) continue;
+    //         pos = del_pos[--idel];
+    //         ptr[pos] = others[other_pos];    
+    //     }
+    //     /*
+    //     //handle the edge log
+    //     index_t rem_count = 0;
+    //     index_t new_del = 0;
+    //     for (index_t j = 1, k =0; j <= marker && k < rem_count; ++j) {
+    //         src_vid = TO_VID(get_src(edges[marker-j]));
+    //         if (src_vid != vid) continue;
+    //         is_del = IS_DEL(get_src(edges[marker-j])); 
+    //         if (!is_del && idel !=0) {
+    //             pos = del_pos[--idel];
+    //             ptr[pos] = others[other_pos];    
+    //         } else {
+    //             new_del += (true == is_del);
+    //             if (total_count < nebr_count) {//normal case
+    //                 ptr[total_count++] = edges[marker-j].dst_id;
+    //             } else {//space is full
+    //                 others[other_pos++] = edges[marker-j].dst_id;
+    //             }
+    //         }
+    //         ++k;
+    //     }
+    //     //Need to handle if more deletion has been observed.
+    //     if (new_del) { }*/
+    //     free(del_pos);
+    //     free(others);
+    // }
+    // return total_count;
 }
 
 template <class T>
 degree_t onegraph_t<T>::get_wnebrs(vid_t vid, T* ptr, degree_t start, degree_t count)
 {
-    vunit_t<T>* v_unit = get_vunit(vid); 
-    delta_adjlist_t<T>* delta_adjlist = v_unit->delta_adjlist;
-    T* local_adjlist = 0;
-    degree_t local_degree = 0;
-    degree_t i_count = 0;
-    degree_t total_count = 0;
+    std::cout << "Unexpected Error Here! degree_t onegraph_t<T>::get_wnebrs(vid_t vid, T* ptr, degree_t start, degree_t count)" << std::endl;
+    // vunit_t<T>* v_unit = get_vunit(vid); 
+    // delta_adjlist_t<T>* delta_adjlist = v_unit->delta_adjlist;
+    // T* local_adjlist = 0;
+    // degree_t local_degree = 0;
+    // degree_t i_count = 0;
+    // degree_t total_count = 0;
             
-    //traverse the delta adj list
-    degree_t delta_degree = start; 
+    // //traverse the delta adj list
+    // degree_t delta_degree = start; 
     
-    while (delta_adjlist != 0 && delta_degree > 0) {
-        local_adjlist = delta_adjlist->get_adjlist();
-        local_degree = delta_adjlist->get_nebrcount();
-        if (delta_degree >= local_degree) {
-            delta_adjlist = delta_adjlist->get_next();
-            delta_degree -= local_degree;
-        } else {
-            i_count = local_degree - delta_degree;
-            memcpy(ptr, local_adjlist + delta_degree, sizeof(T)*i_count);
-            total_count += i_count;
-            delta_adjlist = delta_adjlist->get_next();
-            delta_degree = 0;
-            break;
-        }
-    }
+    // while (delta_adjlist != 0 && delta_degree > 0) {
+    //     local_adjlist = delta_adjlist->get_adjlist();
+    //     local_degree = delta_adjlist->get_nebrcount();
+    //     if (delta_degree >= local_degree) {
+    //         delta_adjlist = delta_adjlist->get_next();
+    //         delta_degree -= local_degree;
+    //     } else {
+    //         i_count = local_degree - delta_degree;
+    //         memcpy(ptr, local_adjlist + delta_degree, sizeof(T)*i_count);
+    //         total_count += i_count;
+    //         delta_adjlist = delta_adjlist->get_next();
+    //         delta_degree = 0;
+    //         break;
+    //     }
+    // }
     
-    delta_degree = count;
-    while (delta_adjlist !=0 && total_count < count) {
-        local_adjlist = delta_adjlist->get_adjlist();
-        local_degree = delta_adjlist->get_nebrcount();
-        i_count = min(local_degree, delta_degree);
-        memcpy(ptr+total_count, local_adjlist, sizeof(T)*i_count);
-        total_count+=i_count;
+    // delta_degree = count;
+    // while (delta_adjlist !=0 && total_count < count) {
+    //     local_adjlist = delta_adjlist->get_adjlist();
+    //     local_degree = delta_adjlist->get_nebrcount();
+    //     i_count = min(local_degree, delta_degree);
+    //     memcpy(ptr+total_count, local_adjlist, sizeof(T)*i_count);
+    //     total_count+=i_count;
         
-        delta_adjlist = delta_adjlist->get_next();
-        delta_degree -= local_degree;
+    //     delta_adjlist = delta_adjlist->get_next();
+    //     delta_degree -= local_degree;
         
-    }
-    return total_count;
+    // }
+    // return total_count;
+    return 0;
 }
 
 template <class T>
@@ -903,80 +914,81 @@ void onegraph_t<T>::adj_prep(write_seg_t* seg)
         
         durable_adjlist->set_nebrcount(total_count);
 
-        //Copy the new in-memory adj-list
-		delta_adjlist = prev_v_unit->delta_adjlist;
-        while(delta_adjlist) {
-			memcpy(adj_list1, delta_adjlist->get_adjlist(),
-				   delta_adjlist->get_nebrcount()*sizeof(T));
-			adj_list1 += delta_adjlist->get_nebrcount();
-			delta_adjlist = delta_adjlist->get_next();
-		}
+        // //Copy the new in-memory adj-list
+		// delta_adjlist = prev_v_unit->delta_adjlist;
+        // while(delta_adjlist) {
+		// 	memcpy(adj_list1, delta_adjlist->get_adjlist(),
+		// 		   delta_adjlist->get_nebrcount()*sizeof(T));
+		// 	adj_list1 += delta_adjlist->get_nebrcount();
+		// 	delta_adjlist = delta_adjlist->get_next();
+		// }
+        std::cout << "Unexpected Error Here! void onegraph_t<T>::adj_prep(write_seg_t* seg)" << std::endl;
     }
 }
 
 template <class T>
 void onegraph_t<T>::read_vtable()
 {
-    off_t size = fsize(vtf);
-    if (size == -1L) {
-        assert(0);
-    }
-    vid_t count = (size/sizeof(disk_vtable_t));
+    // off_t size = fsize(vtf);
+    // if (size == -1L) {
+    //     assert(0);
+    // }
+    // vid_t count = (size/sizeof(disk_vtable_t));
     
-    index_t adj_size = 0;
-    index_t offset = 0;
-    char* adj_list;
-    //durable_adjlist_t<T>* durable_adjlist = 0;
-    delta_adjlist_t<T>*   delta_adjlist = 0;
+    // index_t adj_size = 0;
+    // index_t offset = 0;
+    // char* adj_list;
+    // //durable_adjlist_t<T>* durable_adjlist = 0;
+    // delta_adjlist_t<T>*   delta_adjlist = 0;
 
-    index_t sz_read = 0;
-	vid_t vid = 0;
-	vunit_t<T>* v_unit = 0;
-    disk_vtable_t* dvt = write_seg[0].dvt;
-	snapT_t<T>* next ; 
-    snapid_t snap_id = 1;
+    // index_t sz_read = 0;
+	// vid_t vid = 0;
+	// vunit_t<T>* v_unit = 0;
+    // disk_vtable_t* dvt = write_seg[0].dvt;
+	// snapT_t<T>* next ; 
+    // snapid_t snap_id = 1;
      
-    //read in batches
-    while (count != 0 ) {
-        //vid_t read_count = read(dvt, sizeof(disk_vtable_t), dvt_max_count, vtf);
-        vid_t read_count = read(vtf, dvt, sizeof(disk_vtable_t)*dvt_max_count);
-        read_count /= sizeof(disk_vtable_t); 
+    // //read in batches
+    // while (count != 0 ) {
+    //     //vid_t read_count = read(dvt, sizeof(disk_vtable_t), dvt_max_count, vtf);
+    //     vid_t read_count = read(vtf, dvt, sizeof(disk_vtable_t)*dvt_max_count);
+    //     read_count /= sizeof(disk_vtable_t); 
         
-        //read edge file
-        offset = dvt[0].file_offset;
-        adj_size = dvt[read_count -1].file_offset + sizeof(durable_adjlist_t<T>)
-                +(get_total(dvt[read_count-1].count))*sizeof(T)
-                - offset;
-        adj_list = (char*)malloc(adj_size);
+    //     //read edge file
+    //     offset = dvt[0].file_offset;
+    //     adj_size = dvt[read_count -1].file_offset + sizeof(durable_adjlist_t<T>)
+    //             +(get_total(dvt[read_count-1].count))*sizeof(T)
+    //             - offset;
+    //     adj_list = (char*)malloc(adj_size);
 
-        while (sz_read != adj_size) {
-           sz_read += pread(etf, adj_list+offset, adj_size - sz_read, offset);
-           offset += sz_read;
-        }
-        assert(sz_read == adj_size);
+    //     while (sz_read != adj_size) {
+    //        sz_read += pread(etf, adj_list+offset, adj_size - sz_read, offset);
+    //        offset += sz_read;
+    //     }
+    //     assert(sz_read == adj_size);
 
-        for (vid_t v = 0; v < read_count; ++v) {
-			vid = dvt[v].vid;
+    //     for (vid_t v = 0; v < read_count; ++v) {
+	// 		vid = dvt[v].vid;
             
-            v_unit = new_vunit();
-            set_vunit(vid, v_unit);
+    //         v_unit = new_vunit();
+    //         set_vunit(vid, v_unit);
 			
-            //allocate new snapshot for degree, and initialize
-			next = new_snapdegree();
-            next->snap_id       = snap_id;
-            //next->next          = 0;
-            next->degree        = dvt[v].count;
-            v_unit->set_snapblob(next);
+    //         //allocate new snapshot for degree, and initialize
+	// 		next = new_snapdegree();
+    //         next->snap_id       = snap_id;
+    //         //next->next          = 0;
+    //         next->degree        = dvt[v].count;
+    //         v_unit->set_snapblob(next);
 
-            //assign delta adjlist
-            delta_adjlist = (delta_adjlist_t<T>*)(adj_list + dvt[v].file_offset);
-            delta_adjlist->add_next(0);
-            v_unit->delta_adjlist = delta_adjlist;
-            v_unit->adj_list = delta_adjlist;
+    //         //assign delta adjlist
+    //         delta_adjlist = (delta_adjlist_t<T>*)(adj_list + dvt[v].file_offset);
+    //         delta_adjlist->add_next(0);
+    //         v_unit->delta_adjlist = delta_adjlist;
+    //         v_unit->adj_list = delta_adjlist;
             
-        }
-        count -= read_count;
-    }
+    //     }
+    //     count -= read_count;
+    // }
 }
 /*****************************/
 /*

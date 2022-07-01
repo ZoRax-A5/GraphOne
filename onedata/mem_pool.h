@@ -13,6 +13,7 @@ extern uint64_t vunit_size;
 extern uint64_t snap_size;
 extern uint64_t adjlist_size;
 
+
 /*
 template <class T>
 index_t TO_CACHELINE<T>(index_t count, index_t meta_size)
@@ -37,7 +38,9 @@ template <class T>
 struct mem_t {
     vunit_t<T>* vunit_beg;
     snapT_t<T>* dlog_beg;
-    char*       adjlog_beg;
+    // char*       adjlog_beg;
+    int adjlog_beg = -1;
+    index_t offset = -1;
 	
 	public:
     index_t    	delta_size1;
@@ -47,13 +50,15 @@ struct mem_t {
     index_t     degree_count;
 #endif
 	index_t    	delta_size;
-    
-    char*       adjlog_beg1;
+
 };
 
 template <class T>
 class thd_mem_t {
     mem_t<T>* mem;  
+    bool flag = false;
+    bool iter = 0;
+    char* buf;
  
  public:	
     inline vunit_t<T>* alloc_vunit() {
@@ -97,8 +102,8 @@ class thd_mem_t {
         return eOK;
 	}
     
-	inline delta_adjlist_t<T>* alloc_adjlist(degree_t count, bool hub) {
-		delta_adjlist_t<T>* adj_list = 0;
+	inline index_t alloc_adjlist(degree_t count, bool hub) {
+		
         index_t size = count*sizeof(T) + sizeof(delta_adjlist_t<T>);
         if (hub || count >= 256) {
             size = TO_PAGESIZE(size);
@@ -107,70 +112,121 @@ class thd_mem_t {
         }
         degree_t max_count = (size - sizeof(delta_adjlist_t<T>))/sizeof(T);
 
-        #if defined(DEL) || defined(MALLOC) 
-		adj_list =  (delta_adjlist_t<T>*)malloc(size);
-        assert(adj_list!=0);
-        #else 
-        mem_t<T>* mem1 = mem + omp_get_thread_num();  
+        // #if defined(DEL) || defined(MALLOC) 
+		// adj_list =  (delta_adjlist_t<T>*)malloc(size);
+        // assert(adj_list!=0);
+        // #else 
+        // mem_t<T>* mem1 = mem + omp_get_thread_num();  
+        // index_t tmp = 0;
+		// if (size > mem1->delta_size) {
+		// 	tmp = max(1UL << LOCAL_DELTA_SIZE, size);
+        //     delta_adjlist_bulk(tmp);
+		// }
+		// adj_list = (delta_adjlist_t<T>*)mem1->adjlog_beg;
+		// assert(adj_list != 0);
+		// mem1->adjlog_beg += size;
+		// mem1->delta_size -= size;
+        // #endif
+
+        mem_t<T>* mem1 = mem + omp_get_thread_num();
         index_t tmp = 0;
-		if (size > mem1->delta_size) {
+        if (size > mem1->delta_size) {
 			tmp = max(1UL << LOCAL_DELTA_SIZE, size);
+            // std::cout << "mem1->adjlog_beg = " << mem1->adjlog_beg << ",offset = " << mem1->offset << std::endl;
+            // std::cout << "tmp = " << tmp << ", mem1->delta_size = " << mem1->delta_size << ", size = " << size << std::endl;
             delta_adjlist_bulk(tmp);
 		}
-		adj_list = (delta_adjlist_t<T>*)mem1->adjlog_beg;
-		assert(adj_list != 0);
-		mem1->adjlog_beg += size;
-		mem1->delta_size -= size;
-        #endif
+        index_t adj_list = (((index_t)mem1->adjlog_beg) << 32) + mem1->offset;
         
-        adj_list->set_nebrcount(0);
-        adj_list->add_next(0);
-        adj_list->set_maxcount(max_count);
+        mem1->delta_size -= size;
+        // mem1->offset += size;
+        __sync_fetch_and_add(&mem1->offset, size);
+
+        // adj_list->set_nebrcount(0);
+        // adj_list->add_next(0);
+        // adj_list->set_maxcount(max_count);
+        
+        // std::cout << "iter = " << iter << std::endl;
+        // std::cout << "adj_list = " << adj_list << std::endl;
+        // std::cout << "mem1->adjlog_beg = " << mem1->adjlog_beg << std::endl;
+        // std::cout << "mem1->offset = " << mem1->offset << std::endl;
+        file_delta_adjlist_t<T>::set_nebrcount(adj_list, 0);
+        file_delta_adjlist_t<T>::add_next(adj_list, 0);
+        file_delta_adjlist_t<T>::set_maxcount(adj_list, max_count);
+        
+        // std::cout << "real max_count = " << max_count << std::endl;
+        // std::cout << "max_count = " << file_delta_adjlist_t<T>::get_maxcount(adj_list) << std::endl;
+        // iter += 1;
+        // if (iter == 15) exit(0);
         
 		return adj_list;
 	}
 
     void free_adjlist(delta_adjlist_t<T>* adj_list, bool chain) {
-        #if defined(DEL) || defined(MALLOC)
-        mem_t<T>* mem1 = mem + omp_get_thread_num();  
-        if(chain) {
-            delta_adjlist_t<T>* adj_list1 = adj_list;
-            while (adj_list != 0) {
-                adj_list1 = adj_list->get_next();
-                free(adj_list);
-                adj_list = adj_list1;
-            }
-        } else {
-            free(adj_list);
-        }
-        #endif
+        std::cout << "Unexpected Error Here! void free_adjlist(delta_adjlist_t<T>* adj_list, bool chain) " << std::endl;
+        return ;
+        // #if defined(DEL) || defined(MALLOC)
+        // mem_t<T>* mem1 = mem + omp_get_thread_num();  
+        // if(chain) {
+        //     delta_adjlist_t<T>* adj_list1 = adj_list;
+        //     while (adj_list != 0) {
+        //         adj_list1 = adj_list->get_next();
+        //         free(adj_list);
+        //         adj_list = adj_list1;
+        //     }
+        // } else {
+        //     free(adj_list);
+        // }
+        // #endif
     }
     
     inline status_t delta_adjlist_bulk(index_t size) {
         mem_t<T>* mem1 = mem + omp_get_thread_num();  
         mem1->delta_size = size;
-        mem1->adjlog_beg = (char*)alloc_huge(size);
-        if (MAP_FAILED == mem1->adjlog_beg) {
-            // // Adjlists 放在 DRAM 上
-            // mem1->adjlog_beg = (char*)malloc(size);
-            // assert(mem1->adjlog_beg);
+        mem1->offset = 0;
 
-            // Adjlists 放在 PMEM 上
-            std::string filePath = "/mnt/pmem1/zorax/testGraphOne/delta_adjlist_" + std::to_string(__sync_fetch_and_add(&adjfilecount, 1)) + ".txt";
-            assert( access(filePath.c_str(), 'r') == -1 ); //确保文件不存在
-            size_t mapped_len;
-            int is_pmem;
-            /* create a pmem file and memory map it */
-            mem1->adjlog_beg = (char*)pmem_map_file(filePath.c_str(), size, PMEM_FILE_CREATE, 0666, &mapped_len, &is_pmem);
-            if (mem1->adjlog_beg == NULL)  {
-                std::cout << "Could not map pmem file :" << "for delta_adjlist" << " error: " << strerror(errno) << std::endl;
-            }
-            // if (!is_pmem){
-            //     std::cout << "not pmem!" << std::endl;
-            // }
-            memset(mem1->adjlog_beg, 0, size);  //pre touch, 消除page fault影响
-            assert(mem1->adjlog_beg);
-        }
+        // Adjlists 放在 FILE 中
+        // if (mem1->adjlog_beg != 0) close(mem1->adjlog_beg);
+        std::string filePath = "/mnt/pmem1/zorax/testGraphOne/delta_adjlist_" + std::to_string(__sync_fetch_and_add(&adjfilecount, 1)) + ".txt";
+        assert( access(filePath.c_str(), 'r') == -1 ); //确保文件不存在
+        mem1->adjlog_beg = open(filePath.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0600);
+        
+        // memset(buf, 0, size);
+        
+        // lseek(mem1->adjlog_beg, size, SEEK_SET);
+
+        // char* buf = (char*)calloc(size, sizeof(char));
+        // write(mem1->adjlog_beg, &buf, size*sizeof(char));
+        // free(buf);
+
+        char end = EOF;
+        lseek(mem1->adjlog_beg, size, SEEK_SET);
+        write(mem1->adjlog_beg, &end, sizeof(char));
+        lseek(mem1->adjlog_beg, 0, SEEK_SET);
+        assert(mem1->adjlog_beg);
+
+        // mem1->adjlog_beg = (char*)alloc_huge(size);
+        // if (MAP_FAILED == mem1->adjlog_beg) {
+        //     // // Adjlists 放在 DRAM 上
+        //     // mem1->adjlog_beg = (char*)malloc(size);
+        //     // assert(mem1->adjlog_beg);
+
+        //     // Adjlists 放在 PMEM 上
+        //     std::string filePath = "/mnt/pmem1/zorax/testGraphOne/delta_adjlist_" + std::to_string(__sync_fetch_and_add(&adjfilecount, 1)) + ".txt";
+        //     assert( access(filePath.c_str(), 'r') == -1 ); //确保文件不存在
+        //     size_t mapped_len;
+        //     int is_pmem;
+        //     /* create a pmem file and memory map it */
+        //     mem1->adjlog_beg = (char*)pmem_map_file(filePath.c_str(), size, PMEM_FILE_CREATE, 0666, &mapped_len, &is_pmem);
+        //     if (mem1->adjlog_beg == NULL)  {
+        //         std::cout << "Could not map pmem file :" << "for delta_adjlist" << " error: " << strerror(errno) << std::endl;
+        //     }
+        //     // if (!is_pmem){
+        //     //     std::cout << "not pmem!" << std::endl;
+        //     // }
+        //     memset(mem1->adjlog_beg, 0, size);  //pre touch, 消除page fault影响
+        //     assert(mem1->adjlog_beg);
+        // }
         __sync_fetch_and_add(&adjlist_size, size);
         //cout << "alloc adj " << delta_size << endl; 
         return eOK;

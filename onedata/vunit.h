@@ -3,6 +3,101 @@
 #include "type.h"
 
 template <class T>
+class file_delta_adjlist_t {
+
+public:
+	inline file_delta_adjlist_t<T>() {}
+    static int get_fd(index_t adjlist) {
+        return (adjlist & 0xFFFFFFFF00000000) >> 32;
+    }
+    static int get_offset(index_t adjlist) {
+        return (uint32_t)(adjlist);
+    }
+	static degree_t get_nebrcount(index_t adjlist) {
+        // std::cout << "adjlist = " << adjlist << std::endl;
+        // std::cout << "count = " << count << ", max_count = " << max_count << std::endl;
+        int fd = get_fd(adjlist);
+        uint32_t offset = get_offset(adjlist);
+        // std::cout << "fd = " << fd << ", offset = " << offset << std::endl;
+        degree_t count = 0;
+        pread(fd, &count, sizeof(degree_t), offset+sizeof(index_t));
+        return count;
+    }
+	static void set_nebrcount(index_t adjlist, degree_t degree) { 
+        int fd = get_fd(adjlist);
+        uint32_t offset = get_offset(adjlist);
+        degree_t count = degree;
+        pwrite(fd, &count, sizeof(degree_t), offset+sizeof(index_t));
+    }
+
+	static degree_t incr_nebrcount_noatomic(index_t adjlist) {
+        int fd = get_fd(adjlist);
+        uint32_t offset = get_offset(adjlist);
+        degree_t count = 0;
+        pread(fd, &count, sizeof(degree_t), offset+sizeof(index_t));
+        count += 1;
+        pwrite(fd, &count, sizeof(degree_t), offset+sizeof(index_t));
+        return count-1;
+    }
+	static degree_t incr_nebrcount(index_t adjlist) {
+        int fd = get_fd(adjlist);
+        uint32_t offset = get_offset(adjlist);
+        degree_t count = 0;
+        pread(fd, &count, sizeof(degree_t), offset+sizeof(index_t));
+        count += 1;
+        pwrite(fd, &count, sizeof(degree_t), offset+sizeof(index_t));
+        return count-1;
+    }
+
+    static degree_t get_maxcount(index_t adjlist) { 
+        int fd = get_fd(adjlist);
+        uint32_t offset = get_offset(adjlist);
+        degree_t max_count = 0;
+        pread(fd, &max_count, sizeof(degree_t), offset+sizeof(index_t)+sizeof(degree_t));
+        return max_count;
+    }
+    static void set_maxcount(index_t adjlist, degree_t value) {
+        int fd = get_fd(adjlist);
+        uint32_t offset = get_offset(adjlist);
+        degree_t max_count = value;
+        pwrite(fd, &max_count, sizeof(degree_t), offset+sizeof(index_t)+sizeof(degree_t));
+    }
+
+	// inline T* get_adjlist() { return (T*)(&count + 1); }
+
+	static void add_next(index_t adjlist, index_t fptr) {
+        int fd = get_fd(adjlist);
+        uint32_t offset = get_offset(adjlist);
+        index_t next = fptr;
+        pwrite(fd, &next, sizeof(index_t), offset);
+    }
+
+	static index_t get_next(index_t adjlist) { 
+        int fd = get_fd(adjlist);
+        uint32_t offset = get_offset(adjlist);
+        index_t next = 0;
+        pread(fd, &next, sizeof(index_t), offset);
+        return next;
+    }
+    
+    static void add_nebr(index_t adjlist, T sid) { 
+        int fd = get_fd(adjlist);
+        uint32_t offset = get_offset(adjlist);
+        degree_t index = incr_nebrcount(adjlist);
+        T s = sid;
+        pwrite(fd, &s, sizeof(T), offset+sizeof(index_t)+2*sizeof(degree_t)+index*sizeof(T));
+    }
+    
+    static void add_nebr_noatomic(index_t adjlist, T sid) { 
+        int fd = get_fd(adjlist);
+        uint32_t offset = get_offset(adjlist);
+        degree_t index = incr_nebrcount_noatomic(adjlist);
+        T s = sid;
+        pwrite(fd, &s, sizeof(T), offset+sizeof(index_t)+2*sizeof(degree_t)+index*sizeof(T));
+    }
+};
+
+template <class T>
 class delta_adjlist_t {
 	delta_adjlist_t<T>* next;
     degree_t   max_count;
@@ -163,14 +258,16 @@ class vunit_t {
 	//uint16_t      vflag;
 	//uint16_t    max_size; //max count in delta adj list
     snapT_t<T>*   snap_blob;
-	delta_adjlist_t<T>* delta_adjlist;
-	delta_adjlist_t<T>* adj_list;//Last chain
+	// delta_adjlist_t<T>* delta_adjlist;
+	// delta_adjlist_t<T>* adj_list;//Last chain
+    index_t delta_adjlist = NULL_OFFSET;
+    index_t adj_list = NULL_OFFSET;//Last chain
 
 	inline void reset() {
 		//vflag = 0;
         snap_blob = 0;
-		delta_adjlist = 0;
-        adj_list = 0;
+		delta_adjlist = NULL_OFFSET;
+        adj_list = NULL_OFFSET;
 	}
     inline sdegree_t get_degree() {
         snapT_t<T>*   blob = snap_blob;
@@ -216,12 +313,17 @@ class vunit_t {
 	}*/
     
 	inline delta_adjlist_t<T>* get_delta_adjlist() {
-        return delta_adjlist;
+        degree_t max_count = file_delta_adjlist_t<T>::get_maxcount(delta_adjlist);
+        index_t size = max_count * sizeof(T) + sizeof(delta_adjlist_t<T>);
+        delta_adjlist_t<T>* delta_adj = (delta_adjlist_t<T>*)malloc(size);
+        std::cout << "malloc size = " << size << " here." << std::endl;
+        // Todo: give real delta_adj
+        return delta_adj;
     }
     
-	inline void set_delta_adjlist(delta_adjlist_t<T>* adj_list1) {
-        if (adj_list) {
-			adj_list->add_next(adj_list1);
+	inline void set_delta_adjlist(index_t adj_list1) {
+        if (adj_list != NULL_OFFSET) {
+            file_delta_adjlist_t<T>::add_next(adj_list, adj_list1);
 			adj_list = adj_list1;
 		} else {
 			delta_adjlist = adj_list1;
