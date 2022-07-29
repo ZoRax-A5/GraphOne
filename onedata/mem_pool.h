@@ -9,6 +9,7 @@ using std::max;
 extern uint64_t vunit_size;
 extern uint64_t snap_size;
 extern uint64_t adjlist_size;
+extern uint64_t edge_count;
 
 /*
 template <class T>
@@ -153,6 +154,8 @@ class thd_mem_t {
             assert(mem1->adjlog_beg);
         }
         __sync_fetch_and_add(&adjlist_size, size);
+        __sync_fetch_and_add(&edge_count, 1L);
+        // std::cout << "edge_count = " << edge_count << std::endl; 
         //cout << "alloc adj " << delta_size << endl; 
         return eOK;
     }

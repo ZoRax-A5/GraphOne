@@ -56,7 +56,7 @@ class onegraph_t {
 public:
     int    etf;   //edge table file
 
-public:
+public: 
     onegraph_t(); 
     virtual void  setup(tid_t tid, vid_t a_max_vcount);
     virtual void  archive(edgeT_t<T>* edge, index_t count, snapid_t a_snapid);

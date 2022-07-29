@@ -6,6 +6,8 @@
 
 using std::min;
 
+extern uint64_t edge_count;
+
 template <class T>
 void onegraph_t<T>::archive(edgeT_t<T>* edges, index_t count, snapid_t a_snapid)
 {

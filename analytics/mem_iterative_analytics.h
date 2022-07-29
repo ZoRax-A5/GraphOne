@@ -17,13 +17,18 @@ mem_hop1(gview_t<T>* snaph)
 {
     srand(0);
     vid_t  v_count  = snaph->get_vcount();
-    int query_count = 1 << 24L;
+    std::cout << "v_count = " << v_count << std::endl;
+    int query_count = 1L << 20;
     vid_t* query = (vid_t*)calloc(sizeof(vid_t), query_count);
+    
+    std::cout << "Start 1hop Query" << std::endl;
     int i1 = 0;
     while (i1 < query_count) {
         query[i1] = rand()% v_count;
         if (snaph->get_degree_out(query[i1]) != 0) { ++i1; };
+        // std::cout << i1 << std::endl;
     }
+    std::cout << "End 1hop Query" << std::endl;
 
     index_t          sum = 0;
     index_t         sum1 = 0;
@@ -94,7 +99,7 @@ mem_hop1(gview_t<T>* snaph)
 
     cout << "Sum = " << sum << " 1 Hop Time = " << end - start << endl;
 
-    std::string statistic_filename = "result_go.csv";
+    std::string statistic_filename = "god_update.csv";
     std::ofstream ofs;
     ofs.open(statistic_filename.c_str(), std::ofstream::out | std::ofstream::app );
     ofs << "," << end - start;
@@ -541,7 +546,7 @@ void mem_hop2(gview_t<T>* snaph)
     free(query);
     cout << "Sum2 = " << sum2 << " 2 Hop Time = " << end - start << endl;
 
-    std::string statistic_filename = "result_go.csv";
+    std::string statistic_filename = "god_update.csv";
     std::ofstream ofs;
     ofs.open(statistic_filename.c_str(), std::ofstream::out | std::ofstream::app );
     ofs << "," << end - start;
@@ -685,7 +690,7 @@ double mem_bfs(gview_t<T>* snaph,
     int i1 = 0;
     while (1) {
         root = rand() % v_count;
-        if (snaph->get_degree_out(root) > 40) break;
+        if (snaph->get_degree_out(root) > 20) break;
         i1++;
         if (i1 >= v_count) {
             root = 0;
@@ -1072,7 +1077,7 @@ void mem_pagerank(gview_t<T>* snaph, int iteration_count)
 	cout << "PR Time = " << end - start << endl;
 	cout << endl;
     
-    std::string statistic_filename = "result_go.csv";
+    std::string statistic_filename = "god_update.csv";
     std::ofstream ofs;
     ofs.open(statistic_filename.c_str(), std::ofstream::out | std::ofstream::app );
     ofs << "," << end - start << endl;
