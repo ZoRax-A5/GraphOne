@@ -8,6 +8,7 @@
 #endif
 
 extern uint64_t local_buf_size;
+extern std::string NVMPATH0;
 
 short CorePin(int coreID);
 
@@ -57,11 +58,13 @@ index_t alloc_mem_dir(const string& idirname, char** buf, bool alloc)
 
     // local_buf 放在 PMEM 上
     void* local_buf = 0;
-    char filePath[] = "/pmem/zorax/testGraphOne/local_buf.txt";
+    // char filePath[] = "/pmem/zorax/testGraphOne/local_buf.txt";
+    // char filePath[] = "/pmem/zorax/testGraphOne/local_buf.txt";
+    std::string filePath = NVMPATH0+"local_buf.txt";
     size_t mapped_len;
     int is_pmem;
     /* create a 4k pmem file and memory map it */
-    if ((local_buf = pmem_map_file(filePath, total_size, PMEM_FILE_CREATE, 0666, &mapped_len, &is_pmem)) == NULL)  {
+    if ((local_buf = pmem_map_file(filePath.c_str(), total_size, PMEM_FILE_CREATE, 0666, &mapped_len, &is_pmem)) == NULL)  {
         std::cout << "Could not map pmem file :" << filePath << " error: " << strerror(errno) << std::endl;
     }
     if (!is_pmem){

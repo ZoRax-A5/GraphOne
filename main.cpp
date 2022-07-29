@@ -23,6 +23,8 @@ index_t _edge_count = 0;
 int _dir = 0;//undirected
 int _persist = 0;//no
 int _source = 0;//text
+extern std::string NVMPATH0;
+extern std::string NVMPATH1;
 
 void print_usage() 
 {
@@ -48,6 +50,8 @@ int main(int argc, char* argv[])
 {
     const struct option longopts[] =
     {
+        {"NVMPATH0",    required_argument,  0, 'a'},
+        {"NVMPATH1",    required_argument,  0, 'b'},
         {"vcount",    required_argument,  0, 'v'},
         {"help",      no_argument,        0, 'h'},
         {"idir",      required_argument,  0, 'i'},
@@ -66,7 +70,7 @@ int main(int argc, char* argv[])
 
 	int o;
 	int index = 0;
-	string typefile, idir, odir;
+	string typefile,  idir, odir;
     string queryfile;
     int category = 0;
     int job = 0;
@@ -75,8 +79,16 @@ int main(int argc, char* argv[])
     //int i = 0;
     //while (i < 100000) { usleep(10); ++i; }
     g = new graph; 
-	while ((o = getopt_long(argc, argv, "i:c:j:o:q:t:f:r:v:e:d:s:h", longopts, &index)) != -1) {
+	while ((o = getopt_long(argc, argv, "a:b:i:c:j:o:q:t:f:r:v:e:d:s:h", longopts, &index)) != -1) {
 		switch(o) {
+            case 'a':
+                NVMPATH0 = optarg;
+                cout << "NVMPATH0 = " << NVMPATH0 << endl;
+				break;
+            case 'b':
+                NVMPATH1 = optarg;
+                cout << "NVMPATH1 = " << NVMPATH1 << endl;
+				break;
 			case 'v':
 				#ifdef B64
                 sscanf(optarg, "%ld", &_global_vcount);

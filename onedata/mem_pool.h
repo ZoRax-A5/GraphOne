@@ -12,6 +12,7 @@ static uint32_t adjfilecount = 0; //Rui
 extern uint64_t vunit_size;
 extern uint64_t snap_size;
 extern uint64_t adjlist_size;
+extern std::string NVMPATH1;
 
 /*
 template <class T>
@@ -156,7 +157,7 @@ class thd_mem_t {
             // assert(mem1->adjlog_beg);
 
             // Adjlists 放在 PMEM 上
-            std::string filePath = "/mnt/pmem1/zorax/testGraphOne/delta_adjlist_" + std::to_string(__sync_fetch_and_add(&adjfilecount, 1)) + ".txt";
+            std::string filePath = NVMPATH1+"delta_adjlist_" + std::to_string(__sync_fetch_and_add(&adjfilecount, 1)) + ".txt";
             assert( access(filePath.c_str(), 'r') == -1 ); //确保文件不存在
             size_t mapped_len;
             int is_pmem;

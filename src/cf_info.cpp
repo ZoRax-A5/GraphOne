@@ -49,7 +49,8 @@ uint64_t global_range_in_size = 0;
 uint64_t elog_size = 0;
 uint64_t adjlist_size = 0;
 uint64_t local_buf_size = 0;
-
+std::string NVMPATH0 = "";
+std::string NVMPATH1 = "";
 
 using std::swap;
 

@@ -4,6 +4,7 @@
 #include <libpmem.h>
 
 extern uint64_t elog_size;
+extern std::string NVMPATH1;
 
 template <class T>
 class tmp_blog_t {
@@ -93,13 +94,14 @@ void blog_t<T>::alloc_edgelog(index_t count) {
     // assert(blog_beg);
 
     // Edgelog 放在 PMEM 上
-    char filePath[] = "/mnt/pmem1/zorax/testGraphOne/blogbeg.txt";
+    // char filePath[] = "/mnt/pmem1/zorax/testGraphOne/blogbeg.txt";
+    std::string filePath = NVMPATH1+"blogbeg.txt";
     // size_t fileSize =  ALIGNMENT (1ULL * blog_count * sizeof(edgeT_t<T>),  PAGESIZE);
     size_t fileSize =  blog_count * sizeof(edgeT_t<T>);
     size_t mapped_len;
     int is_pmem;
     /* create a 4k pmem file and memory map it */
-    if ((blog_beg = (edgeT_t<T>*)pmem_map_file(filePath, fileSize, PMEM_FILE_CREATE, 0666, &mapped_len, &is_pmem)) == NULL)  {
+    if ((blog_beg = (edgeT_t<T>*)pmem_map_file(filePath.c_str(), fileSize, PMEM_FILE_CREATE, 0666, &mapped_len, &is_pmem)) == NULL)  {
         std::cout << "Could not map pmem file :" << filePath << " error: " << strerror(errno) << std::endl;
     }
     if (!is_pmem){
