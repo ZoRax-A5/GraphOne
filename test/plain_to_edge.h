@@ -372,7 +372,7 @@ void plaingraph_manager_t<T>::prep_graph_adj(const string& idirname, const strin
 
     cout << "Make graph time = " << end - start << endl;
 
-    std::string statistic_filename = "result_gom.csv";
+    std::string statistic_filename = "gop.csv";
     std::ofstream ofs;
     ofs.open(statistic_filename.c_str(), std::ofstream::out | std::ofstream::app );
     ofs << end - start << "," << vm / KB << "," << rss / KB << "," 
@@ -436,13 +436,13 @@ void plaingraph_manager_t<T>::prep_graph_mix(const string& idirname, const strin
     std::cout << "adjlist total size      = " << adjlist_size / GB << " GB." << std::endl;
     std::cout << "Local buf total size    = " << local_buf_size / GB << " GB." << std::endl;
 
-    std::string statistic_filename = "result_gom.csv";
+    std::string statistic_filename = "gop.csv";
     std::ofstream ofs;
     ofs.open(statistic_filename.c_str(), std::ofstream::out | std::ofstream::app );
     ofs << end - start << "," << vm / KB << "," << rss / KB << "," 
         << vunit_size / GB << "," << snap_size / GB << "," 
         << global_range_size / GB << "," << global_range_in_size / GB << ","
-        << elog_size / GB << "," << adjlist_size / GB << "," << local_buf_size / GB;
+        << elog_size / GB << "," << adjlist_size / GB << "," << local_buf_size / GB << std::endl;
     ofs.close();
     
     cout << "Make graph time = " << end - start << endl;
@@ -588,13 +588,13 @@ void plaingraph_manager_t<T>::prep_graph2(const string& idirname, const string& 
     std::cout << "adjlist total size      = " << adjlist_size / GB << " GB." << std::endl;
     std::cout << "Local buf total size    = " << local_buf_size / GB << " GB." << std::endl;
 
-    std::string statistic_filename = "result_gom.csv";
+    std::string statistic_filename = "gop_update.csv";
     std::ofstream ofs;
     ofs.open(statistic_filename.c_str(), std::ofstream::out | std::ofstream::app );
     ofs << end - start << "," << vm / KB << "," << rss / KB << "," 
         << vunit_size / GB << "," << snap_size / GB << "," 
         << global_range_size / GB << "," << global_range_in_size / GB << ","
-        << elog_size / GB << "," << adjlist_size / GB << "," << local_buf_size / GB;
+        << elog_size / GB << "," << adjlist_size / GB << "," << local_buf_size / GB << std::endl;
     ofs.close();
 }
 
@@ -689,7 +689,7 @@ void plaingraph_manager_t<T>::run_bfs(sid_t root/*=1*/)
     }
     
     cout << "BFS complex = " << bfs_time << endl;    
-    std::string statistic_filename = "result_gom.csv";
+    std::string statistic_filename = "gop_query.csv";
     std::ofstream ofs;
     ofs.open(statistic_filename.c_str(), std::ofstream::out | std::ofstream::app );
     ofs << "," << bfs_time;

@@ -101,10 +101,10 @@ mem_hop1(gview_t<T>* snaph)
 
     cout << "Sum = " << sum << " 1 Hop Time = " << end - start << endl;
 
-    std::string statistic_filename = "result_gom.csv";
+    std::string statistic_filename = "gop_query.csv";
     std::ofstream ofs;
     ofs.open(statistic_filename.c_str(), std::ofstream::out | std::ofstream::app );
-    ofs << "," << end - start;
+    ofs << end - start;
     ofs.close();
 }
 
@@ -548,7 +548,7 @@ void mem_hop2(gview_t<T>* snaph)
     free(query);
     cout << "Sum2 = " << sum2 << " 2 Hop Time = " << end - start << endl;
 
-    std::string statistic_filename = "result_gom.csv";
+    std::string statistic_filename = "gop_query.csv";
     std::ofstream ofs;
     ofs.open(statistic_filename.c_str(), std::ofstream::out | std::ofstream::app );
     ofs << "," << end - start;
@@ -1067,7 +1067,7 @@ void mem_pagerank(gview_t<T>* snaph, int iteration_count)
 	cout << "PR Time = " << end - start << endl;
 	cout << endl;
     
-    std::string statistic_filename = "result_gom.csv";
+    std::string statistic_filename = "gop_query.csv";
     std::ofstream ofs;
     ofs.open(statistic_filename.c_str(), std::ofstream::out | std::ofstream::app );
     ofs << "," << end - start << endl;
