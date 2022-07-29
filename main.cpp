@@ -74,19 +74,11 @@ int main(int argc, char* argv[])
     int job = 0;
 	THD_COUNT = omp_get_max_threads()-1;// - 3;
 
-<<<<<<< HEAD
     // pid_t proc_id = getpid();
     // std::string statistic_filename = "pid.txt";
     // std::ofstream ifs(statistic_filename);
     // ifs << proc_id;
     // ifs.close();
-=======
-    pid_t proc_id = getpid();
-    std::string statistic_filename = "pid.txt";
-    std::ofstream ifs(statistic_filename);
-    ifs << proc_id;
-    ifs.close();
->>>>>>> 48228abbdcd303b14222413ae13a5123cf89b376
 
     // std::string statistic_filename = "pid.txt";
     // std::ofstream ofs;
