@@ -1173,15 +1173,15 @@ void test_ingestion(const string& idir, const string& odir)
         manager.run_bfs(1024);
     }
 
-    // //Run PageRank
-    // for (int i = 0; i < 1; i++){
-    //     manager.run_pr();
-    // }
-
-    //Run Connect Components
+    //Run PageRank
     for (int i = 0; i < 1; i++){
-        manager.run_cc();
+        manager.run_pr();
     }
+
+    // //Run Connect Components
+    // for (int i = 0; i < 1; i++){
+    //     manager.run_cc();
+    // }
     
     
     

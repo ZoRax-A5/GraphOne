@@ -687,18 +687,6 @@ double mem_bfs(gview_t<T>* snaph,
 	int				top_down   = 1;
 	sid_t			frontier   = 0;
     sid_t           v_count    = snaph->get_vcount();
-    
-    srand(0);
-    int i1 = 0;
-    while (1) {
-        root = rand() % v_count;
-        if (snaph->get_degree_out(root) > 20) break;
-        i1++;
-        if (i1 >= v_count) {
-            root = rand() % v_count;
-            break;
-        }
-    }
 
 	double start1 = mywtime();
     //if (snaph->get_degree_out(root) == 0) { root = 0;}

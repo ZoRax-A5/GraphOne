@@ -338,6 +338,7 @@ void plaingraph_manager_t<T>::prep_graph_adj(const string& idirname, const strin
     blog->blog_count = count;
     
     read_idir_text(idirname, odirname, pgraph, file_and_insert);
+    std::cout << "hello, there 342." << std::endl;
 
     double start = mywtime();
     
@@ -662,10 +663,24 @@ void plaingraph_manager_t<T>::run_bfs(sid_t root/*=1*/)
     cout << "static View creation = " << end - start << endl;    
     
     double bfs_time = 0;
-    
-    for (int i = 0; i < 3; i++){
-        uint8_t* level_array = 0;
-        level_array = (uint8_t*) calloc(snaph->get_vcount(), sizeof(uint8_t));
+
+    vid_t root_count = 3;
+    sid_t v_count    = snaph->get_vcount();
+
+    for (int i = 0; i < root_count; i++){
+        uint8_t* level_array = (uint8_t*)calloc(snaph->get_vcount(), sizeof(uint8_t));
+        // choose root randomly
+        srand(0);
+        vid_t i1 = 0, root = 0;
+        while (1) {
+            root = rand() % v_count;
+            if (snaph->get_degree_out(root) > 20) break;
+            i1++;
+            if (i1 >= v_count) {
+                root = 0;
+                break;
+            }
+        }
         start = mywtime();
         mem_bfs<T>(snaph, level_array, root);
         end = mywtime();
