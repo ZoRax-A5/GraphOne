@@ -107,7 +107,7 @@ void onegraph_t<T>::decrement_count_noatomic(vid_t vid, degree_t count /*=1*/)
 template <class T>
 void  onegraph_t<T>::add_nebr_noatomic(vid_t vid, T sid) 
 {
-    vunit_t<T>* v_unit = get_vunit(vid); 
+    vunit_t<T>* v_unit = get_vunit(vid);
 
     index_t adj_list1 = v_unit->adj_list;
 
@@ -128,6 +128,12 @@ void  onegraph_t<T>::add_nebr_noatomic(vid_t vid, T sid)
         adj_list = new_delta_adjlist(max_count, (new_count >= HUB_COUNT));
         v_unit->set_delta_adjlist(adj_list);
         adj_list1 = adj_list;
+        // if (vid == 26)  {
+        //     std::cout << "vid = " << vid << std::endl;
+        //     std::cout << "adj_list1 = " << adj_list1 << std::endl;
+        //     std::cout << "vunit->delta_adjlist = " << v_unit->delta_adjlist << std::endl;
+        //     std::cout << "vunit->adj_list = " << v_unit->adj_list << std::endl;
+        // }
     }
     #endif
     file_delta_adjlist_t<T>::add_nebr_noatomic(adj_list1, sid);

@@ -30,7 +30,8 @@ index_t  DURABLE_SIZE = (1L << 28);//Durable adj-list
 index_t  W_SIZE = (1L << 12); //Edges to write
 index_t  DVT_SIZE = (1L <<24);//durable v-unit 
 
-index_t NULL_OFFSET = 0xFFFFFFFFFFFFFFFF;
+// index_t NULL_OFFSET = 0xFFFFFFFFFFFFFFFF;
+index_t NULL_OFFSET = 0;
 
 #ifdef B64
 propid_t INVALID_PID = 0xFFFF;

@@ -187,9 +187,11 @@ class thd_mem_t {
 
         // Adjlists 放在 FILE 中
         // if (mem1->adjlog_beg != 0) close(mem1->adjlog_beg);
-        std::string filePath = "/mnt/pmem1/zorax/testGraphOne/delta_adjlist_" + std::to_string(__sync_fetch_and_add(&adjfilecount, 1)) + ".txt";
+        // std::string filePath = "/mnt/pmem1/zorax/testGraphOne/delta_adjlist_" + std::to_string(__sync_fetch_and_add(&adjfilecount, 1)) + ".txt";
+        std::string filePath = "/mnt/ramdisk1/zorax/testGraphOne/delta_adjlist_" + std::to_string(__sync_fetch_and_add(&adjfilecount, 1)) + ".txt";
         assert( access(filePath.c_str(), 'r') == -1 ); //确保文件不存在
         mem1->adjlog_beg = open(filePath.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0600);
+        // std::cout << "mem1->adjlog_beg = " << mem1->adjlog_beg << std::endl;
         
         // memset(buf, 0, size);
         

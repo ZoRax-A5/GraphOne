@@ -57,7 +57,8 @@ index_t alloc_mem_dir(const string& idirname, char** buf, bool alloc)
 
     // local_buf 放在 PMEM 上
     void* local_buf = 0;
-    char filePath[] = "/pmem/zorax/testGraphOne/local_buf.txt";
+    // char filePath[] = "/pmem/zorax/testGraphOne/local_buf.txt";
+    char filePath[] = "/mnt/ramdisk/zorax/testGraphOne/local_buf.txt";
     size_t mapped_len;
     int is_pmem;
     /* create a 4k pmem file and memory map it */

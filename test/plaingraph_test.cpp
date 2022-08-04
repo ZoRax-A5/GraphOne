@@ -1158,7 +1158,7 @@ void test_ingestion(const string& idir, const string& odir)
     manager.setup_graph(_global_vcount);    
     manager.prep_graph2(idir, odir);
 
-    //Run 1-HOP query
+    // //Run 1-HOP query
     // for (int i = 0; i < 1; i++){
     //     manager.run_1hop();
     // }

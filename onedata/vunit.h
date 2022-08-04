@@ -87,6 +87,14 @@ public:
         T s = sid;
         pwrite(fd, &s, sizeof(T), offset+sizeof(index_t)+2*sizeof(degree_t)+index*sizeof(T));
     }
+
+    static T get_nebr(index_t adjlist, degree_t index) {
+        int fd = get_fd(adjlist);
+        uint32_t offset = get_offset(adjlist);
+        T s;
+        pread(fd, &s, sizeof(T), offset+sizeof(index_t)+2*sizeof(degree_t)+index*sizeof(T));
+        return s;
+    }
     
     static void add_nebr_noatomic(index_t adjlist, T sid) { 
         int fd = get_fd(adjlist);
@@ -313,12 +321,48 @@ class vunit_t {
 	}*/
     
 	inline delta_adjlist_t<T>* get_delta_adjlist() {
-        degree_t max_count = file_delta_adjlist_t<T>::get_maxcount(delta_adjlist);
-        index_t size = max_count * sizeof(T) + sizeof(delta_adjlist_t<T>);
-        delta_adjlist_t<T>* delta_adj = (delta_adjlist_t<T>*)malloc(size);
-        std::cout << "malloc size = " << size << " here." << std::endl;
+        delta_adjlist_t<T>* start_adj = 0;
+        delta_adjlist_t<T>* last_adj = 0;
+        delta_adjlist_t<T>* delta_adj = 0;
+
+        index_t local_adjlist = delta_adjlist;
+
         // Todo: give real delta_adj
-        return delta_adj;
+        while (local_adjlist != NULL_OFFSET) {
+            degree_t max_count = file_delta_adjlist_t<T>::get_maxcount(local_adjlist);
+            degree_t count = file_delta_adjlist_t<T>::get_nebrcount(local_adjlist);
+            index_t next = file_delta_adjlist_t<T>::get_next(local_adjlist);
+            index_t size = max_count * sizeof(T) + sizeof(delta_adjlist_t<T>);
+
+            // std::cout << "local_adjlist = " << local_adjlist << std::endl;
+
+            if (start_adj == 0) {
+                start_adj = delta_adj = (delta_adjlist_t<T>*)malloc(size);
+            }
+
+            // recover next
+            if (next != NULL_OFFSET) {
+                delta_adj->add_next((delta_adjlist_t<T>*)malloc(size));
+            } else {
+                delta_adj->add_next(NULL);
+            }
+            // recover maxcount
+            delta_adj->set_maxcount(max_count);
+            delta_adj->set_nebrcount(0);
+            // recover count and data
+            for (degree_t d = 0; d < count; ++d) {
+                // std::cout << "loop" << std::endl;
+                T sid = file_delta_adjlist_t<T>::get_nebr(local_adjlist, d);
+                // std::cout << "d = " << d << ", sid = " << get_sid(sid) << std::endl;
+                delta_adj->add_nebr_noatomic(sid);
+            }
+            // std::cout << "here: max_count = " << delta_adj->get_maxcount() << ", count = " << delta_adj->get_nebrcount() << ", next = " << delta_adj->get_next() << std::endl;
+            // set delta adjlist to next
+            local_adjlist = next;
+            delta_adj = delta_adj->get_next();
+        }
+
+        return start_adj;
     }
     
 	inline void set_delta_adjlist(index_t adj_list1) {

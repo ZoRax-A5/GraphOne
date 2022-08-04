@@ -93,7 +93,8 @@ void blog_t<T>::alloc_edgelog(index_t count) {
     // assert(blog_beg);
 
     // Edgelog 放在 PMEM 上
-    char filePath[] = "/mnt/pmem1/zorax/testGraphOne/blogbeg.txt";
+    // char filePath[] = "/mnt/pmem1/zorax/testGraphOne/blogbeg.txt";
+    char filePath[] = "/mnt/ramdisk1/zorax/testGraphOne/blogbeg.txt";
     // size_t fileSize =  ALIGNMENT (1ULL * blog_count * sizeof(edgeT_t<T>),  PAGESIZE);
     size_t fileSize =  blog_count * sizeof(edgeT_t<T>);
     size_t mapped_len;

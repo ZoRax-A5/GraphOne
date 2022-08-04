@@ -21,6 +21,40 @@ template<class T>
 void
 mem_hop1(gview_t<T>* snaph)
 {
+    // degree_t      delta_degree = 0;
+    // degree_t        nebr_count = 0;
+    // degree_t      local_degree = 0;
+
+    // sid_t sid = 0;
+    // vid_t v   = 2;
+
+    // delta_adjlist_t<T>* delta_adjlist;
+    // T* local_adjlist = 0;
+    // cout << "starting test" << endl;
+    // delta_adjlist = snaph->get_nebrs_archived_in(v);
+    // cout << "starting test 2" << endl;
+    // cout << "delta adjlist = " << delta_adjlist << endl;
+    // if (0 != delta_adjlist) {
+    //     nebr_count = snaph->get_degree_in(v);
+    //     cout << "nebr_count = " << nebr_count << endl;
+        
+    //     //traverse the delta adj list
+    //     delta_degree = nebr_count;
+        
+    //     while (delta_adjlist != 0 && delta_degree > 0) {
+    //         local_adjlist = delta_adjlist->get_adjlist();
+    //         local_degree = delta_adjlist->get_nebrcount();
+    //         degree_t i_count = min(local_degree, delta_degree);
+    //         for (degree_t i = 0; i < i_count; ++i) {
+    //             sid = get_sid(local_adjlist[i]);
+    //             std::cout << sid << ", ";
+    //         }
+    //         delta_adjlist = delta_adjlist->get_next();
+    //         delta_degree -= local_degree;
+    //     }
+    //     std::cout << "degree = " << nebr_count << std::endl;
+    // }   
+
     srand(0);
     vid_t  v_count  = snaph->get_vcount();
     int query_count = 1 << 24L;
@@ -51,7 +85,7 @@ mem_hop1(gview_t<T>* snaph)
 
     //#pragma omp for reduction(+:sum) schedule (static) nowait
     for (int i = 0; i < query_count; i++) {
-        
+        std::cout << "i = " << i << std::endl;
         v = query[i];
         delta_adjlist = snaph->get_nebrs_archived_out(v);
         
@@ -74,24 +108,24 @@ mem_hop1(gview_t<T>* snaph)
             }
         }
 
-        //on-the-fly snapshots should process this
-        vid_t src, dst; 
-        v = query[i];
-        edgeT_t<T>* edges = 0;
-        index_t marker = snaph->get_nonarchived_edges(edges);
-        if (0 == marker) continue;
-        #pragma omp parallel for reduction(+:sum1) schedule(static)
-        for (index_t j = 0; j < marker ; ++j) {
-            src = TO_SID(edges[j].src_id);
-            dst = TO_SID(get_sid(edges[j].dst_id));
-            if (src == v) {
-                sum1 += dst;
-            }
+        // //on-the-fly snapshots should process this
+        // vid_t src, dst; 
+        // v = query[i];
+        // edgeT_t<T>* edges = 0;
+        // index_t marker = snaph->get_nonarchived_edges(edges);
+        // if (0 == marker) continue;
+        // #pragma omp parallel for reduction(+:sum1) schedule(static)
+        // for (index_t j = 0; j < marker ; ++j) {
+        //     src = TO_SID(edges[j].src_id);
+        //     dst = TO_SID(get_sid(edges[j].dst_id));
+        //     if (src == v) {
+        //         sum1 += dst;
+        //     }
 
-            if (dst == v) {
-                sum1 += src;
-            }
-        }
+        //     if (dst == v) {
+        //         sum1 += src;
+        //     }
+        // }
     }
     }
     

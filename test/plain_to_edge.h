@@ -593,7 +593,7 @@ void plaingraph_manager_t<T>::prep_graph2(const string& idirname, const string& 
     ofs << end - start << "," << vm / KB << "," << rss / KB << "," 
         << vunit_size / GB << "," << snap_size / GB << "," 
         << global_range_size / GB << "," << global_range_in_size / GB << ","
-        << elog_size / GB << "," << adjlist_size / GB << "," << local_buf_size / GB;
+        << elog_size / GB << "," << adjlist_size / GB << "," << local_buf_size / GB << std::endl;
     ofs.close();
 }
 
